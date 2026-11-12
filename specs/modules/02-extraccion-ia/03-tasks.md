@@ -22,7 +22,7 @@
 
 ## Fase 4: Tests Unitarios
 
-- [ ] **T-10:** Test de `PypdfTextExtractor` con fixture PDF mínimo en `backend/tests/fixtures/` (PDF de 1 página generado en test con `fpdf2`-free approach o PDF binario embebido): ok, no-parseable → `PdfInvalidoError`, sin texto → `PdfSinTextoError`.
-- [ ] **T-11:** Test de `MockExtractor`: determinismo (dos llamadas → igual resultado), variantes `aprobada`/`rechazado` válidas contra el esquema.
-- [ ] **T-12:** Test de `LLMStructuredExtractor` con cliente LLM **falsificado** (stub que devuelve dicts): respuesta válida ok; respuesta inválida en 1er intento y válida en el 2do → ok con reintento; inválida siempre → `ExtraccionFallidaError`; verificar que `json_crudo_ia` conserva el output crudo.
-- [ ] **T-13:** Test de `factory.py`: selección por `EXTRACTOR_MODE` y error claro si `llm` sin API key.
+- [x] **T-10:** Test de `PypdfTextExtractor` con fixture PDF mínimo en `backend/tests/fixtures/` (PDF de 1 página generado en test con `fpdf2`-free approach o PDF binario embebido): ok, no-parseable → `PdfInvalidoError`, sin texto → `PdfSinTextoError`.
+- [x] **T-11:** Test de `MockExtractor`: determinismo (dos llamadas → igual resultado), variantes `aprobada`/`rechazado` válidas contra el esquema.
+- [x] **T-12:** Test de `LLMStructuredExtractor` con cliente LLM **falsificado** (stub que devuelve dicts): respuesta válida ok; respuesta inválida en 1er intento y válida en el 2do → ok con reintento; inválida siempre → `ExtraccionFallidaError`; verificar que `json_crudo_ia` conserva el output crudo.
+- [x] **T-13:** Test de `factory.py`: selección por `EXTRACTOR_MODE` y error claro si `llm` sin API key.
