@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     llm_provider: str = "openai"
     llm_model: str = "gpt-4o-mini"
     llm_api_key: str | None = None
-    mock_variant: str = "aprobada"  # fixture del MockExtractor: aprobada | rechazado
+    mock_variant: str = "aprobada"  # fixture del MockExtractor para archivos no reconocidos
     padron_path: str = "backend/data/proveedores.json"
     max_pdf_mb: int = 5
     tz: str = "America/Argentina/Buenos_Aires"

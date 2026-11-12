@@ -226,7 +226,7 @@ class TestMockExtractor:
         assert primera.json_crudo_ia is not None
 
     def test_variantes_validas_contra_el_esquema(self):
-        for variante in ("aprobada", "rechazado"):
+        for variante in ("aprobada", "rechazado", "monto-alto-sin-oc"):
             resultado = MockExtractor(RUTA_FIXTURES, variante).extraer("x", "y")
             FacturaExtraida.model_validate(resultado.json_crudo_ia)  # no lanza
 
@@ -242,6 +242,36 @@ class TestMockExtractor:
         desvio = abs(factura.monto_total - (suma + factura.impuestos))
 
         assert desvio > Decimal("1.00")
+
+    def test_ejemplos_de_la_demo_resuelven_su_fixture(self):
+        """Matriz de verdad de MOD-03 reproducible en modo mock (ADR-05-01)."""
+        extractor = MockExtractor(RUTA_FIXTURES, "aprobada")
+
+        aprobada = extractor.extraer("x", "ej-factura-aprobada.pdf").factura
+        desvio = extractor.extraer("x", "ej-factura-desvio.pdf").factura
+        monto_alto = extractor.extraer("x", "ej-monto-alto-sin-oc.pdf").factura
+
+        assert aprobada.numero_orden_compra == "OC-2026-0042"  # sin R3 ni R4
+        suma = sum((item.subtotal for item in desvio.items), Decimal("0.00"))
+        assert abs(desvio.monto_total - (suma + desvio.impuestos)) > Decimal("1.00")  # R3
+        assert monto_alto.monto_total > Decimal("500000")  # dispara R4 (tope estricto)
+        assert monto_alto.numero_orden_compra is None
+
+    def test_archivo_original_del_ejemplo_resubido_tambien_resuelve(self):
+        """Si el usuario descarga el PDF y lo re-sube, conserva su escenario."""
+        extractor = MockExtractor(RUTA_FIXTURES, "aprobada")
+
+        factura = extractor.extraer("x", "factura-monto-alto-sin-oc.pdf").factura
+
+        assert factura.monto_total > Decimal("500000")
+        assert factura.numero_orden_compra is None
+
+    def test_nombre_desconocido_cae_en_la_variante_configurada(self):
+        esperado = MockExtractor(RUTA_FIXTURES, "rechazado").extraer("x", "y")
+
+        resultado = MockExtractor(RUTA_FIXTURES, "rechazado").extraer("x", "comprobante.pdf")
+
+        assert resultado.model_dump() == esperado.model_dump()
 
     def test_variante_invalida_falla_rapido(self):
         with pytest.raises(ValueError, match="MOCK_VARIANT"):

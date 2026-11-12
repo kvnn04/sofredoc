@@ -1,0 +1,13 @@
+{
+  "name": "sofredoc-validator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo SofreDoc Validator — herramientas de QA en la raíz (Playwright e2e). El backend vive en backend/ y el frontend en frontend/.",
+  "scripts": {
+    "e2e": "playwright test",
+    "e2e:report": "playwright show-report qa/artifacts/playwright-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0"
+  }
+}

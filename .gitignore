@@ -20,6 +20,7 @@ dist/
 
 # QA artifacts (Playwright / k6)
 qa/artifacts/
+test-results/
 
 # Entorno con secretos — nunca en el repo (los .env.example sí se versionan)
 .env
