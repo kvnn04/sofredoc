@@ -20,9 +20,9 @@
 
 ## Fase 3: Infraestructura (Adaptador de Padrón)
 
-- [ ] **T-11:** Crear `backend/data/proveedores.json` con los 4 proveedores de `02-design.md` (3 activos + 1 inactivo).
-- [ ] **T-12:** Implementar `backend/src/infrastructure/padron/json_padron.py` (`JsonPadronProveedores`) con carga en cache, normalización de CUIT y log de warning si el archivo no existe.
-- [ ] **T-13:** Implementar `backend/src/infrastructure/clock.py` (`RelojSistema`) que cumple `ClockPort` resolviendo "hoy" con `zoneinfo("America/Argentina/Buenos_Aires")`.
+- [x] **T-11:** Crear `backend/data/proveedores.json` con los 4 proveedores de `02-design.md` (3 activos + 1 inactivo).
+- [x] **T-12:** Implementar `backend/src/infrastructure/padron/json_padron.py` (`JsonPadronProveedores`) con carga en cache, normalización de CUIT y log de warning si el archivo no existe.
+- [x] **T-13:** Implementar `backend/src/infrastructure/clock.py` (`RelojSistema`) que cumple `ClockPort` resolviendo "hoy" con `zoneinfo("America/Argentina/Buenos_Aires")`.
 
 ## Fase 4: Tests Unitarios (Pytest)
 

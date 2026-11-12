@@ -1,0 +1,6 @@
+[
+  { "cuit": "30-12345678-1", "razon_social": "Distribuidora Andina S.A.", "activo": true },
+  { "cuit": "30-71234567-1", "razon_social": "Comercial Austral SRL", "activo": true },
+  { "cuit": "20-12345678-6", "razon_social": "Servicios Técnicos SD S.A.", "activo": true },
+  { "cuit": "20-87654321-5", "razon_social": "Proveedor Baja SRL", "activo": false }
+]
