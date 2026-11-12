@@ -16,14 +16,14 @@
 
 ## Fase 3: Presentación (Componentes + Layout)
 
-- [ ] **T-07:** Implementar `App.tsx` con el layout de dos columnas de `02-design.md` §5 (grid Tailwind, visor 40% / resultados 60%, min-width útil ~1024px) y la máquina de estados visual (empty-state, skeleton de carga, resultado, error).
-- [ ] **T-08:** Implementar `BarraSuperior.tsx`: título, botones de los 3 ejemplos (nombre + chip del resultado esperado), botón "Subir PDF" con `input[type=file] accept="application/pdf"` y validación client-side de 5 MB.
-- [ ] **T-09:** Implementar `VisorPDF.tsx`: `iframe` con `src` del blob/URL de ejemplo, altura completa de columna, fallback de texto si el navegador bloquea el embed.
-- [ ] **T-10:** Implementar `SemaforoReglas.tsx`: badge global (`APROBADO` verde / `RECHAZADO` rojo) con `CheckCircle2`/`XCircle`, **desglose de latencia por etapa** (IA / reglas / total), id de auditoría, y una fila por regla con chip de código, nombre, mensaje y `codigo_error` en monospace rojo si falla.
-- [ ] **T-11:** Implementar `TablaDatos.tsx`: cabecera de comprobante + tabla de ítems + fila de total, montos formateados `es-AR`, estado vacío si `datos_extraidos` es `null`.
-- [ ] **T-12:** Implementar `JsonInspector.tsx`: panel plegable "Ver JSON Estructurado (Pydantic)" con `datos_extraidos` y `json_crudo_ia` en `<pre>` con scroll, y botón "Copiar" (`navigator.clipboard`).
-- [ ] **T-13:** Implementar `Historial.tsx`: tabla (fecha, archivo, estado con color, latencia ms) paginada simple, fila seleccionada re-carga la auditoría completa vía `obtenerAuditoria(id)`.
-- [ ] **T-14:** Implementar `BannerError.tsx`: muestra `error.codigo` + `error.mensaje` para `413/422/502` sin destruir el estado previo de la pantalla.
+- [x] **T-07:** Implementar `App.tsx` con el layout de dos columnas de `02-design.md` §5 (grid Tailwind, visor 40% / resultados 60%, min-width útil ~1024px) y la máquina de estados visual (empty-state, skeleton de carga, resultado, error).
+- [x] **T-08:** Implementar `BarraSuperior.tsx`: título, botones de los 3 ejemplos (nombre + chip del resultado esperado), botón "Subir PDF" con `input[type=file] accept="application/pdf"` y validación client-side de 5 MB.
+- [x] **T-09:** Implementar `VisorPDF.tsx`: `iframe` con `src` del blob/URL de ejemplo, altura completa de columna, fallback de texto si el navegador bloquea el embed.
+- [x] **T-10:** Implementar `SemaforoReglas.tsx`: badge global (`APROBADO` verde / `RECHAZADO` rojo) con `CheckCircle2`/`XCircle`, **desglose de latencia por etapa** (IA / reglas / total), id de auditoría, y una fila por regla con chip de código, nombre, mensaje y `codigo_error` en monospace rojo si falla.
+- [x] **T-11:** Implementar `TablaDatos.tsx`: cabecera de comprobante + tabla de ítems + fila de total, montos formateados `es-AR`, estado vacío si `datos_extraidos` es `null`.
+- [x] **T-12:** Implementar `JsonInspector.tsx`: panel plegable "Ver JSON Estructurado (Pydantic)" con `datos_extraidos` y `json_crudo_ia` en `<pre>` con scroll, y botón "Copiar" (`navigator.clipboard`).
+- [x] **T-13:** Implementar `Historial.tsx`: tabla (fecha, archivo, estado con color, latencia ms) paginada simple, fila seleccionada re-carga la auditoría completa vía `obtenerAuditoria(id)`.
+- [x] **T-14:** Implementar `BannerError.tsx`: muestra `error.codigo` + `error.mensaje` para `413/422/502` sin destruir el estado previo de la pantalla.
 
 ## Fase 4: Pulido
 

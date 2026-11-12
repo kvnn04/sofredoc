@@ -1,7 +1,7 @@
 /**
  * Hook del catálogo de ejemplos (MOD-04 T-04): carga `GET /ejemplos` al montar.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Ejemplo } from "../domain/types";
 import { aErrorApi, listarEjemplos } from "../infrastructure/apiClient";
 import type { ErrorApi } from "../infrastructure/apiClient";
@@ -16,17 +16,17 @@ interface UseEjemplos {
 
 export function useEjemplos(): UseEjemplos {
   const [ejemplos, setEjemplos] = useState<Ejemplo[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const [cargando, setCargando] = useState(true); // la carga empieza al montar
   const [error, setError] = useState<ErrorApi | null>(null);
   const [intento, setIntento] = useState(0);
 
   useEffect(() => {
     let vivo = true;
-    setCargando(true);
-    setError(null);
     listarEjemplos()
       .then((lista) => {
-        if (vivo) setEjemplos(lista);
+        if (!vivo) return;
+        setEjemplos(lista);
+        setError(null);
       })
       .catch((causa: unknown) => {
         if (vivo) setError(aErrorApi(causa));
@@ -39,5 +39,11 @@ export function useEjemplos(): UseEjemplos {
     };
   }, [intento]);
 
-  return { ejemplos, cargando, error, recargar: () => setIntento((n) => n + 1) };
+  const recargar = useCallback(() => {
+    setCargando(true);
+    setError(null);
+    setIntento((n) => n + 1);
+  }, []);
+
+  return { ejemplos, cargando, error, recargar };
 }
