@@ -1,0 +1,23 @@
+# SofreDoc Validator — gitignore raíz
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Backend runtime (SQLite — efímero)
+backend/data/sofredoc.db
+
+# Node / Frontend
+node_modules/
+dist/
+
+# QA artifacts (Playwright / k6)
+qa/artifacts/
+
+# Entorno con secretos — nunca en el repo (los .env.example sí se versionan)
+.env
+backend/.env
+frontend/.env

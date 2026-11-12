@@ -1,0 +1,11 @@
+# SofreDoc Validator — Reglas para el agente
+
+Tu contexto maestro y protocolo de trabajo es el archivo **AGENTS.md** en la raíz de este repositorio: léelo COMPLETO antes de escribir una línea de código.
+
+Orden de lectura obligatorio:
+1. AGENTS.md (raíz)
+2. specs/README.md (convenciones globales)
+3. specs/PROGRESO.md (bitácora: continúa donde quedó la sesión anterior)
+4. Los 4 documentos del módulo pendiente: specs/modules/NN-*/01-spec.md, 02-design.md, 03-tasks.md, 04-verification.md
+
+La fuente única de verdad es specs/. Si tu código contradice una spec, el código está mal. Protocolo de desvíos, autonomía y commits por fase: ver AGENTS.md §4–§6.
