@@ -2,12 +2,14 @@
 
 from fastapi.testclient import TestClient
 
+from src.config import Settings
 from src.main import API_VERSION, create_app
 
 
-def test_health_responde_ok() -> None:
+def test_health_responde_ok(tmp_path) -> None:
     """CU-02: `GET /api/v1/health` → 200 con status ok, versión y modo extractor."""
-    client = TestClient(create_app())
+    settings = Settings(db_path=str(tmp_path / "smoke.db"), extractor_mode="mock")
+    client = TestClient(create_app(settings=settings))
 
     response = client.get("/api/v1/health")
 
@@ -15,4 +17,4 @@ def test_health_responde_ok() -> None:
     body = response.json()
     assert body["status"] == "ok"
     assert body["version"] == API_VERSION
-    assert body["extractor_mode"] in ("mock", "llm")
+    assert body["extractor_mode"] == "mock"

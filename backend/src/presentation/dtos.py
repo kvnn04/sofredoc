@@ -55,7 +55,7 @@ class RegistroAuditoriaDTO(BaseModel):
             monto_total=_numero(registro.monto_total),
             datos_extraidos=registro.datos_extraidos,
             reglas_evaluadas=[
-                ReglaResultadoDTO.model_validate(regla) for regla in registro.reglas_evaluadas
+                ReglaResultadoDTO(**regla.model_dump()) for regla in registro.reglas_evaluadas
             ],
             json_crudo_ia=registro.json_crudo_ia,
             tiempo_ejecucion_ms=registro.tiempo_ejecucion_ms,

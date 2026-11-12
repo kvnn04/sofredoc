@@ -9,8 +9,10 @@ __pycache__/
 .coverage
 coverage.xml
 
-# Backend runtime (SQLite — efímero)
+# Backend runtime (SQLite — efímero; WAL genera los sidecars -shm/-wal)
 backend/data/sofredoc.db
+backend/data/sofredoc.db-shm
+backend/data/sofredoc.db-wal
 
 # Node / Frontend
 node_modules/

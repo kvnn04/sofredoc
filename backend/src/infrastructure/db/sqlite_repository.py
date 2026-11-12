@@ -60,6 +60,11 @@ class SqliteAuditoriaRepository:
             ).fetchone()
         return self._mapear(fila) if fila is not None else None
 
+    def cerrar(self) -> None:
+        """Cierra la conexión compartida (apagado de la app o teardown de tests)."""
+        with self._lock:
+            self._conn.close()
+
     # ------------------------------------------------------------------ helpers
     @staticmethod
     def _parametros(auditoria: RegistroAuditoria) -> tuple:
