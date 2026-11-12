@@ -10,9 +10,9 @@
 
 ## Fase 2: Aplicación (Hooks)
 
-- [ ] **T-04:** Implementar `useEjemplos()` (carga el catálogo al montar).
-- [ ] **T-05:** Implementar `useAuditoria()`: máquina de estados `idle | loading | resultado | error`, expone `auditar(ejemploId | File)`, guarda `ResultadoAuditoria` y el `pdfUrl` (blob URL o URL de ejemplo) para el visor; revoca blob URLs al reemplazar.
-- [ ] **T-06:** Implementar `useHistorial(limit, offset)`: listado paginado + `refrescar()` invocado tras cada auditoría exitosa.
+- [x] **T-04:** Implementar `useEjemplos()` (carga el catálogo al montar).
+- [x] **T-05:** Implementar `useAuditoria()`: máquina de estados `idle | loading | resultado | error`, expone `auditar(ejemploId | File)`, guarda `ResultadoAuditoria` y el `pdfUrl` (blob URL o URL de ejemplo) para el visor; revoca blob URLs al reemplazar.
+- [x] **T-06:** Implementar `useHistorial(limit, offset)`: listado paginado + `refrescar()` invocado tras cada auditoría exitosa.
 
 ## Fase 3: Presentación (Componentes + Layout)
 
