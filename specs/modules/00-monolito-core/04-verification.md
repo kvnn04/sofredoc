@@ -14,12 +14,12 @@ Para este módulo no aplica cobertura de dominio (no hay reglas aún); solo se e
 
 ## 2. Verificación Manual (Zero-Setup)
 
-- [ ] `pip install -r backend/requirements.txt` completa sin errores (Python 3.11+).
-- [ ] `uvicorn src.main:app --reload --port 8000` arranca desde `backend/` y `GET http://localhost:8000/api/v1/health` responde `200` con `extractor_mode` correcto.
-- [ ] `npm install && npm run dev` arranca desde `frontend/` y `http://localhost:5173` renderiza sin errores de consola.
-- [ ] Copiar `.env.example` → `.env`, cambiar `EXTRACTOR_MODE=llm` y verificar que `/api/v1/health` refleja el cambio sin tocar código.
-- [ ] `npm run build` (tsc + vite build) termina en verde.
-- [ ] `ruff check .` en `backend/` sin hallazgos.
+- [x] `pip install -r backend/requirements.txt` completa sin errores (Python 3.11+).
+- [x] `uvicorn src.main:app --reload --port 8000` arranca desde `backend/` y `GET http://localhost:8000/api/v1/health` responde `200` con `extractor_mode` correcto.
+- [x] `npm install && npm run dev` arranca desde `frontend/` y `http://localhost:5173` renderiza sin errores de consola.
+- [x] Copiar `.env.example` → `.env`, cambiar `EXTRACTOR_MODE=llm` y verificar que `/api/v1/health` refleja el cambio sin tocar código.
+- [x] `npm run build` (tsc + vite build) termina en verde.
+- [x] `ruff check .` en `backend/` sin hallazgos.
 
 ## 3. Pruebas de Estrés y Rendimiento (k6)
 
@@ -35,8 +35,8 @@ No aplica en este módulo (se ejecuta desde MOD-05 con la API completa).
 
 ## 5. Criterio de Aceptación Final (Definition of Done)
 
-- [ ] Todas las tareas de `03-tasks.md` están marcadas como `[x]`.
-- [ ] El suite smoke de Pytest pasa en verde.
-- [ ] Backend y frontend arrancan con los comandos del quickstart del `README.md`.
-- [ ] `/api/v1/health` refleja la configuración del `.env` sin cambios de código.
-- [ ] `npm run build` y `ruff check .` en verde.
+- [x] Todas las tareas de `03-tasks.md` están marcadas como `[x]`.
+- [x] El suite smoke de Pytest pasa en verde.
+- [x] Backend y frontend arrancan con los comandos del quickstart del `README.md`.
+- [x] `/api/v1/health` refleja la configuración del `.env` sin cambios de código.
+- [x] `npm run build` y `ruff check .` en verde.

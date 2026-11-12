@@ -10,7 +10,7 @@ Bienvenido a la **fuente única de verdad** del proyecto **SofreDoc Validator**.
 
 | ID | Módulo / Feature | Estado | Spec | Design | Tasks | Verification |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| `MOD-00` | Arquitectura Monolito & Core | ⚪ Pendiente | [01](./modules/00-monolito-core/01-spec.md) | [02](./modules/00-monolito-core/02-design.md) | [03](./modules/00-monolito-core/03-tasks.md) | [04](./modules/00-monolito-core/04-verification.md) |
+| `MOD-00` | Arquitectura Monolito & Core | 🟢 Completado | [01](./modules/00-monolito-core/01-spec.md) | [02](./modules/00-monolito-core/02-design.md) | [03](./modules/00-monolito-core/03-tasks.md) | [04](./modules/00-monolito-core/04-verification.md) |
 | `MOD-01` | Dominio y Motor de Reglas | ⚪ Pendiente | [01](./modules/01-motor-reglas/01-spec.md) | [02](./modules/01-motor-reglas/02-design.md) | [03](./modules/01-motor-reglas/03-tasks.md) | [04](./modules/01-motor-reglas/04-verification.md) |
 | `MOD-02` | Ingesta PDF y Extracción IA | ⚪ Pendiente | [01](./modules/02-extraccion-ia/01-spec.md) | [02](./modules/02-extraccion-ia/02-design.md) | [03](./modules/02-extraccion-ia/03-tasks.md) | [04](./modules/02-extraccion-ia/04-verification.md) |
 | `MOD-03` | API REST y SQLite | ⚪ Pendiente | [01](./modules/03-api-sqlite/01-spec.md) | [02](./modules/03-api-sqlite/02-design.md) | [03](./modules/03-api-sqlite/03-tasks.md) | [04](./modules/03-api-sqlite/04-verification.md) |
