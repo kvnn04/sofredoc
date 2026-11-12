@@ -4,11 +4,11 @@
 
 ## Fase 1: Esqueleto Backend (Core)
 
-- [ ] **T-00:** Inicializar git en la raíz, crear `.gitignore` (`backend/data/sofredoc.db`, `node_modules/`, `.venv/`, `dist/`, `__pycache__/`, `qa/artifacts/`) y hacer el primer commit "specs SDD v1"; el proyecto avanza con **un commit por módulo/fase** (decisión 2026-11-12).
-- [ ] **T-01:** Crear estructura de carpetas del monorepo según `02-design.md` (backend/frontend/qa/specs).
-- [ ] **T-02:** Crear entorno virtual Python y `backend/requirements.txt` con las dependencias de `02-design.md` §4; `pip install -r requirements.txt` sin errores.
-- [ ] **T-03:** Implementar `backend/src/config.py` con `Settings` (pydantic-settings) y crear `.env.example` con todas las variables de la tabla §2 con valores default seguros (`EXTRACTOR_MODE=mock`, `LLM_API_KEY` sin valor).
-- [ ] **T-04:** Implementar `backend/src/main.py` con app factory, CORS y `GET /api/v1/health`; verificar manualmente que `uvicorn src.main:app --reload` arranca y responde.
+- [x] **T-00:** Inicializar git en la raíz, crear `.gitignore` (`backend/data/sofredoc.db`, `node_modules/`, `.venv/`, `dist/`, `__pycache__/`, `qa/artifacts/`) y hacer el primer commit "specs SDD v1"; el proyecto avanza con **un commit por módulo/fase** (decisión 2026-11-12).
+- [x] **T-01:** Crear estructura de carpetas del monorepo según `02-design.md` (backend/frontend/qa/specs).
+- [x] **T-02:** Crear entorno virtual Python y `backend/requirements.txt` con las dependencias de `02-design.md` §4; `pip install -r requirements.txt` sin errores.
+- [x] **T-03:** Implementar `backend/src/config.py` con `Settings` (pydantic-settings) y crear `.env.example` con todas las variables de la tabla §2 con valores default seguros (`EXTRACTOR_MODE=mock`, `LLM_API_KEY` sin valor).
+- [x] **T-04:** Implementar `backend/src/main.py` con app factory, CORS y `GET /api/v1/health`; verificar manualmente que `uvicorn src.main:app --reload` arranca y responde.
 
 ## Fase 2: Scaffold Frontend
 
