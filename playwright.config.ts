@@ -12,6 +12,9 @@
  */
 import { defineConfig } from "@playwright/test";
 
+/** Python del backend: venv en Windows; el python global en CI/Linux. */
+const PYTHON = process.platform === "win32" ? ".venv\\Scripts\\python.exe" : "python";
+
 export default defineConfig({
   testDir: "./qa/e2e",
   timeout: 30_000,
@@ -31,8 +34,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command:
-        "node ../qa/e2e/reset-db.mjs && .venv\\Scripts\\python.exe -m uvicorn src.main:app --port 8000",
+      command: `node ../qa/e2e/reset-db.mjs && ${PYTHON} -m uvicorn src.main:app --port 8000`,
       cwd: "./backend",
       url: "http://localhost:8000/api/v1/health",
       reuseExistingServer: !process.env.CI,

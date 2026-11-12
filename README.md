@@ -60,19 +60,48 @@ Copiar `backend/.env.example` → `backend/.env` y `frontend/.env.example` → `
 ## Calidad
 
 ```powershell
-# Tests (desde la raíz)
-backend\.venv\Scripts\python.exe -m pytest backend\tests -v
+# Tests + gate de cobertura (desde la raíz; dominio 100%, total ≥ 95%)
+backend\.venv\Scripts\python.exe -m pytest backend\tests -q --cov=src --cov-report=term-missing --cov-fail-under=95
 
 # Lint + format (Python)
 backend\.venv\Scripts\python.exe -m ruff check backend
 backend\.venv\Scripts\python.exe -m ruff format backend
 
-# Lint (frontend)
-cd frontend ; npm run lint
+# Lint + build de producción (frontend)
+cd frontend ; npm run lint ; npm run build
 
-# Build de producción (frontend)
-cd frontend ; npm run build
+# E2E Playwright (levanta backend mock + frontend solo; 4 escenarios, retries 0)
+npx playwright test qa/e2e/auditoria.spec.ts
+
+# k6: prueba de carga (rampa a 50 VUs; RN-5-01: SOLO con EXTRACTOR_MODE=mock)
+k6 run qa/load/stress_test.js          # completa (~105 s)
+$env:SMOKE="1" ; k6 run qa/load/stress_test.js   # smoke CI: 10 VUs × 30 s
 ```
+
+Umbrales verificados (SLOs, detalle en `specs/modules/05-qa-testing/04-verification.md`):
+
+| Métrica | Umbral | Obtenido |
+| :--- | :--- | :--- |
+| Tests Pytest (104) | < 30 s | **5.47 s** |
+| Cobertura dominio / aplicación | 100% / > 90% | **100% / 100%** |
+| E2E Playwright (4 escenarios) | 2 pasadas sin flakes | **3 pasadas verdes** |
+| k6 a 50 VUs: tasa de error | < 1% | **0.00%** |
+| k6 a 50 VUs: latencia p95 | < 500 ms | **449.35 ms** |
+
+Ver [qa/README.md](./qa/README.md) para la guía completa de QA.
+
+## Capturas de la demo
+
+Capturas reales generadas por la suite E2E (`CAPTURAS=1`, ver `qa/README.md`):
+
+![Demo APROBADO](docs/capturas/demo-01-aprobado.png)
+*Ejemplo #001: semáforo verde R1–R5 con desglose de latencia (IA / reglas / total), datos extraídos e inspector de JSON.*
+
+![Demo RECHAZADO](docs/capturas/demo-02-rechazado.png)
+*Ejemplo con desvío de monto: `RECHAZADO` por R3 (`DISCREPANCIA_CONTABLE`), el resto del semáforo en verde.*
+
+![Demo JSON + historial](docs/capturas/demo-03-json-historial.png)
+*Inspector de JSON (objeto Pydantic + crudo IA, copiable) e historial con estado y latencias por auditoría.*
 
 ## Estructura
 

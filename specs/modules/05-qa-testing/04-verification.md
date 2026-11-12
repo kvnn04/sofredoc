@@ -27,12 +27,12 @@ pytest backend/tests -v --cov=src --cov-report=term-missing --cov-fail-under=95
 npx playwright test qa/e2e/auditoria.spec.ts
 ```
 
-- [ ] Verificar la carga de los 3 ejemplos pre-cargados (resultados: APROBADO / RECHAZADO-R3 / RECHAZADO-R4).
-- [ ] Confirmar actualización visual del semáforo (`APROBADO` vs `RECHAZADO`).
-- [ ] Validar visualización del panel de JSON Pydantic (plegado → desplegado → copiable, Pydantic + crudo IA).
-- [ ] Verificar el desglose de latencia por etapa (IA / reglas / total) junto al badge de estado.
-- [ ] Historial: ≥ 3 filas tras los 3 escenarios, con latencia en ms y recarga de detalle.
-- [ ] Dos pasadas consecutivas en verde (cero flakes, `retries: 0`).
+- [x] Verificar la carga de los 3 ejemplos pre-cargados (resultados: APROBADO / RECHAZADO-R3 / RECHAZADO-R4).
+- [x] Confirmar actualización visual del semáforo (`APROBADO` vs `RECHAZADO`).
+- [x] Validar visualización del panel de JSON Pydantic (plegado → desplegado → copiable, Pydantic + crudo IA).
+- [x] Verificar el desglose de latencia por etapa (IA / reglas / total) junto al badge de estado.
+- [x] Historial: ≥ 3 filas tras los 3 escenarios, con latencia en ms y recarga de detalle.
+- [x] Dos pasadas consecutivas en verde (cero flakes, `retries: 0`). *(Se corrieron 3 pasadas: 24,3 s / 18,7 s / 19,4 s — 4/4 passed cada una.)*
 
 ## 3. Pruebas de Estrés y Rendimiento (k6)
 
@@ -74,16 +74,22 @@ está fuera de alcance (nota de DESIGN-05 §5).
 | 2026-11-12 | Gate de cobertura como parte del DoD | El motor de reglas audita decisiones contables; sin 100% de dominio no hay garantía. | `--cov-fail-under` en el comando oficial. |
 | 2026-11-12 | k6 smoke de 10 VUs para CI | Meseta de 50 VUs es lenta para pipeline; el smoke valida regeneración sin exceder tiempos. | Opcional, señal temprana de regresiones. |
 | 2026-11-12 | Deploy de cierre en Render + Vercel | Confirmado por el product owner: el MVP debe poder evaluarse sin instalar nada. | SQLite efímero en free tier → historial volátil, documentado. |
+| 2026-11-12 | **ADR-05-01:** el mock resuelve la fixture por identidad del ejemplo (nombre de archivo `ej-…` o el PDF original re-subido) | Los E2E (RN-5-04) corren en modo mock sin `LLM_API_KEY`: sin esto los 3 ejemplos darían APROBADO y los escenarios R3/R4 serían imposibles. No cambia contrato API, esquema de BD ni reglas de negocio. | Matriz de verdad reproducible en demo y E2E (T-06); fixture nueva `extraccion-monto-alto-sin-oc.json` con fecha estática 2026-10-13 (mismo riesgo de vencimiento que ADR-02-06: regenerar si la demo envejece). |
+| 2026-11-12 | **ADR-05-02:** reset de la BD efímera dentro del comando del `webServer` (`qa/e2e/reset-db.mjs`) | Playwright arranca los `webServer` **antes** del `globalSetup`: borrar la BD ahí fallaba con EPERM (archivo abierto por uvicorn). | Cada corrida E2E empieza de cero (reproducible); RN-5-05 intacta. |
+| 2026-11-12 | **ADR-05-03:** el E2E no aserta sobre el visor de PDF | Chromium headless no renderiza PDFs en línea (iframe vacío); el flujo auditado es completo. | Limitación del navegador headless, no del producto; en navegador real el visor muestra el PDF. |
+| 2026-11-12 | **ADR-05-04:** k6 corre contra BD efímera `qa/artifacts/k6-sofredoc.db` | RN-5-05: ningún test de carga toca `backend/data/sofredoc.db`. | Medición sobre SQLite en disco, igual que la corrida local. |
+| 2026-11-12 | **ADR-05-05:** workflow único de verificación, sin deploy automático | SPEC-05 §5: el deploy de cierre es manual/scriptado; CI valida calidad en cada push. | Orden `pytest → ruff → build → playwright → k6 smoke` con reportes como artefactos. |
+| 2026-11-12 | **ADR-05-06 (observación):** p95 de 449 ms a 50 VUs, cerca del umbral | Cuello de botella: la conexión SQLite compartida con lock serializa inserts y lecturas (la extracción mock tarda < 10 ms). | Aceptable para la PoC; escalar a Postgres/pool de conexiones queda fuera de alcance (nota de DESIGN-05 §5). |
 
 ## 5. Criterio de Aceptación Final (Definition of Done) — Proyecto Completo
 
-- [ ] Todas las tareas de `03-tasks.md` de **los 6 módulos** están marcadas como `[x]`.
-- [ ] Todos los tests de Pytest pasan en verde (`unit` + `integration`, < 30 s, sin red).
-- [ ] Cobertura: dominio 100%, aplicación > 90% (gate activo).
-- [ ] Los tests de Playwright se ejecutan correctamente sin flakiness (2 pasadas).
-- [ ] k6 cumple con los SLAs de latencia (p95 < 500 ms) y tasa de error (< 1%) con 50 VUs en modo mock.
-- [ ] Los 3 PDFs de ejemplo son válidos y vigentes (fechas dentro de los 60 días de R5).
-- [ ] La demo completa corre de cero con 2 comandos (backend + frontend) en < 15 s de setup post-instalación.
-- [ ] `specs/README.md` refleja el estado real (🟢 Completado) y cada `04-verification.md` tiene su ADR log completo.
-- [ ] Backend y frontend desplegados (Render + Vercel) con smoke post-deploy en verde y URLs documentadas.
-- [ ] `README.md` raíz con quickstart, arquitectura, sección de calidad y capturas de la demo.
+- [ ] Todas las tareas de `03-tasks.md` de **los 6 módulos** están marcadas como `[x]`. *(MOD-00..MOD-04 completos; MOD-05 queda con T-14..T-16 — deploy de cierre — pendientes de las plataformas de Kevin.)*
+- [x] Todos los tests de Pytest pasan en verde (`unit` + `integration`, < 30 s, sin red). *(104 passed en 5.47 s.)*
+- [x] Cobertura: dominio 100%, aplicación > 90% (gate activo). *(Dominio 100%, aplicación 100%, total 99.30% con `--cov-fail-under=95`.)*
+- [x] Los tests de Playwright se ejecutan correctamente sin flakiness (2 pasadas). *(3 pasadas consecutivas: 24,3 / 18,7 / 19,4 s, `retries: 0`.)*
+- [x] k6 cumple con los SLAs de latencia (p95 < 500 ms) y tasa de error (< 1%) con 50 VUs en modo mock. *(0.00% errores, p95 449.35 ms — §3.)*
+- [x] Los 3 PDFs de ejemplo son válidos y vigentes (fechas dentro de los 60 días de R5). *(Generados el 2026-11-12 con hoy−5/−20/−30; regenerar `scripts/generar_ejemplos.py` si la demo envejece — lo mismo aplica a la fecha estática de las fixtures del mock.)*
+- [x] La demo completa corre de cero con 2 comandos (backend + frontend) en < 15 s de setup post-instalación. *(Quickstart del README raíz.)*
+- [ ] `specs/README.md` refleja el estado real (🟢 Completado) y cada `04-verification.md` tiene su ADR log completo. *(Todos los módulos 🟢 salvo MOD-05: 🟡 con QA completo y deploy pendiente.)*
+- [ ] Backend y frontend desplegados (Render + Vercel) con smoke post-deploy en verde y URLs documentadas. *(Fase 5 — pendiente de que Kevin configure/autorice sus plataformas; guía preparada en `docs/despliegue.md`.)*
+- [x] `README.md` raíz con quickstart, arquitectura, sección de calidad y capturas de la demo. *(Capturas reales del E2E en `docs/capturas/`.)*

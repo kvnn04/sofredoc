@@ -23,9 +23,9 @@
 
 ## Fase 4: Integración y Cierre
 
-- [ ] **T-11:** Workflow opcional de verificación (GitHub Actions): job único que corre `pytest` → `npm run build` → `playwright` → `k6 run` en modo smoke, con reportes como artefactos.
-- [ ] **T-12:** Completar el ADR Log y el Definition of Done de `04-verification.md`; actualizar la tabla de estado de `specs/README.md` (módulos 🟢).
-- [ ] **T-13:** Actualizar el `README.md` raíz con la sección "Calidad" (comandos de pytest, playwright, k6 y umbrales) y capturas de la demo (Día 4 del plan original).
+- [x] **T-11:** Workflow opcional de verificación (GitHub Actions): job único que corre `pytest` → `npm run build` → `playwright` → `k6 run` en modo smoke, con reportes como artefactos. *(`.github/workflows/verificacion.yml`; se corrigió el `webServer` de Playwright para ser cross-platform.)*
+- [x] **T-12:** Completar el ADR Log y el Definition of Done de `04-verification.md`; actualizar la tabla de estado de `specs/README.md` (módulos 🟢). *(ADR-05-01..06; el 🟢 de MOD-05 queda supeditado al deploy de Fase 5 → 🟡.)*
+- [x] **T-13:** Actualizar el `README.md` raíz con la sección "Calidad" (comandos de pytest, playwright, k6 y umbrales) y capturas de la demo (Día 4 del plan original). *(Capturas reales del E2E en `docs/capturas/`.)*
 
 ## Fase 5: Despliegue de Cierre
 
