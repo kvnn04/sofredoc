@@ -12,9 +12,9 @@
 
 ## Fase 2: Scaffold Frontend
 
-- [ ] **T-05:** Generar proyecto Vite `react-ts` en `frontend/`, instalar y configurar Tailwind CSS v4 y `lucide-react`; `npm run dev` renderiza la página base.
-- [ ] **T-06:** Crear las 4 capas (`domain/`, `application/`, `infrastructure/`, `presentation/`) en `frontend/src/` con archivos semilla y limpiar el boilerplate de Vite.
-- [ ] **T-07:** Configurar proxy `/api` → `http://localhost:8000` en `vite.config.ts` y variable `VITE_API_URL` en `.env.example` del frontend.
+- [x] **T-05:** Generar proyecto Vite `react-ts` en `frontend/`, instalar y configurar Tailwind CSS v4 y `lucide-react`; `npm run dev` renderiza la página base.
+- [x] **T-06:** Crear las 4 capas (`domain/`, `application/`, `infrastructure/`, `presentation/`) en `frontend/src/` con archivos semilla y limpiar el boilerplate de Vite.
+- [x] **T-07:** Configurar proxy `/api` → `http://localhost:8000` en `vite.config.ts` y variable `VITE_API_URL` en `.env.example` del frontend.
 
 ## Fase 3: Calidad Base
 
