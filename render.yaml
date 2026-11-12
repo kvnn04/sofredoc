@@ -1,0 +1,22 @@
+# Render Blueprint del backend (MOD-05 Fase 5) — ver docs/despliegue.md
+# En Render: New → Blueprint → este repo crea el Web Service `sofredoc-api`.
+services:
+  - type: web
+    name: sofredoc-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: EXTRACTOR_MODE
+        value: mock
+      - key: LLM_PROVIDER
+        value: openai
+      - key: LLM_MODEL
+        value: gpt-4o-mini
+      # Secretos y CORS se completan en el dashboard (nunca versionados):
+      - key: LLM_API_KEY
+        sync: false # solo si EXTRACTOR_MODE=llm
+      - key: CORS_ORIGINS
+        sync: false # https://<dominio-final>.vercel.app (paso 3 de docs/despliegue.md)

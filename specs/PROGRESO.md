@@ -6,10 +6,10 @@
 
 ## Estado actual (resumen rápido)
 
-- **Fase del proyecto:** Implementación iniciada — **MOD-00..MOD-04 completos** (core + reglas + extracción + API/SQLite + **frontend de pantalla dividida**, todo en verde).
-- **Siguiente acción concreta:** `MOD-05` Fase 1 → QA (Pytest ya cubierto; Playwright e2e en `qa/e2e/` + k6 en `qa/load/` + deploy Render/Vercel) según `specs/modules/05-qa-testing/`.
-- **Módulos:** 00 🟢 · 01 🟢 · 02 🟢 · 03 🟢 · 04 🟢 (checklist visual §2 pendiente de pasada de Kevin o de MOD-05 Playwright) · 05 ⚪ Pendiente.
-- **Bloqueos:** ninguno para MOD-05. *Pendientes con LLM real (siguen de sesiones anteriores): verificación de MOD-02 §2 y del ejemplo R4 de la UI con `EXTRACTOR_MODE=llm` — falta `backend/.env` con `LLM_API_KEY`.*
+- **Fase del proyecto:** MOD-00..MOD-05 en lo esencial: MOD-00..MOD-04 completos (MOD-04 con DoD 5/5 tras automatizar su checklist en el E2E) + **MOD-05 QA completo (T-01..T-13)**: gate de cobertura, E2E Playwright (5 escenarios × 2 pasadas verdes, incluye subida propia y errores CU-05), k6 a 50 VUs en verde, workflow CI, README+capturas. Falta el **deploy de cierre (T-14..T-16)**.
+- **Siguiente acción concreta:** deploy Render + Vercel siguiendo `docs/despliegue.md` (15–20 min, requiere cuentas/orden de Kevin) → luego DoD global (`DoD`).
+- **Módulos:** 00 🟢 · 01 🟢 · 02 🟢 · 03 🟢 · 04 🟢 · 05 🟡 (QA 100%, deploy pendiente).
+- **Bloqueos:** deploy = plataformas de Kevin (repo en GitHub + Render + Vercel). *Pendientes con LLM real (sesiones anteriores): verificación de MOD-02 §2 y del ejemplo R4 de la UI con `EXTRACTOR_MODE=llm` — falta `backend/.env` con `LLM_API_KEY`.*
 - **Configuración del usuario (Kevin):** autonomía completa (tests, deps, archivos, commit local, LLM real, push/deploy) · verificación completa obligatoria · desvío menor → ADR y seguir; desvío de contrato/esquema/regla → preguntar · commits por fase.
 - **Protocolo de sesión (misión implícita en AGENTS.md §3):** Kevin escribe una palabra y el agente ya sabe qué hacer — `arrancá` = módulo pendiente completo (anuncia y ejecuta, sin esperar confirmación) · `MOD-XX` / `MOD-XX Fase N` = override · `prueba` = solo próxima fase · `estado` = resumen · `todo` = continuo hasta el final · `DoD` = revisión final. Al cerrar un módulo: bitácora + estado 🟢 en specs/README.md + **esperar al usuario** (no continuar al siguiente módulo por su cuenta).
 
@@ -239,3 +239,47 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM (el frontend corre contra mock; sigue pendiente la key para el modo `llm`).
+
+### [2026-11-12] Sesión 6 — MOD-05 Fases 1–4 completas (QA) + Fase 5 preparada
+
+**Qué se hizo:**
+- Fase 1 (T-01..T-04): verificación de suites (`unit/` + `integration/` ya organizadas) y del gate de cobertura oficial (`--cov-fail-under=95`); `test_smoke.py` ahora cierra su conexión SQLite (sin ResourceWarning).
+- Fase 2 (T-05..T-07): Playwright 1.65 en la raíz (`package.json` + `playwright.config.ts` con `webServer` que levanta backend mock con BD efímera + frontend Vite, `retries: 0`), `qa/e2e/auditoria.spec.ts` con los 4 escenarios obligatorios, `qa/e2e/reset-db.mjs` y `qa/README.md`. Tres pasadas consecutivas en verde + capturas de la demo con `CAPTURAS=1` (en `docs/capturas/`). Requirió ADR-05-01: el `MockExtractor` resuelve la fixture por identidad del ejemplo (nombre `ej-…` o el PDF original re-subido) y se agregó la fixture `extraccion-monto-alto-sin-oc.json` — sin esto los escenarios R3/R4 del E2E eran imposibles en modo mock. Tests del mock ampliados (37 passed, cobertura de `infrastructure/llm` 100%).
+- Fase 3 (T-08..T-10): `qa/load/stress_test.js` (rampa 30 s a 50 VUs, meseta 1 min, drenaje 15 s + `SMOKE=1` para CI) y corrida real contra backend mock con BD efímera; resultados registrados en `04-verification.md` §3.
+- Fase 4 (T-11..T-13): `.github/workflows/verificacion.yml` (pytest gate → ruff → build frontend → Playwright → k6 smoke, con reporte E2E como artefacto; webServer hecho cross-platform), ADR-05-01..06, DoD §5 parcialmente marcado (7/10), `specs/README.md` (MOD-05 → 🟡) y `README.md` raíz con sección Calidad (umbrales reales) + capturas.
+- Fase 4-bis (extensión del E2E): escenario 5 de subida propia — empty-state, `.txt` → `PDF_INVALIDO`, PDF 6 MB → `ARCHIVO_MUY_GRANDE`, ambos **sin perder el empty-state** (CU-05, validación client-side sin red), y flujo completo con un PDF real (`APROBADO`, visor con `iframe[src^="blob:"]`, estado "Auditando…" asertado amplificando la latencia del POST con `page.route` — ADR-05-07). Con esto quedó **cerrado el checklist §2 de MOD-04** (10/10) y su DoD §5 (5/5, ADR-04-07).
+- Fase 5 (T-14..T-16) **preparada, no ejecutada**: `docs/despliegue.md` (guía Render + Vercel paso a paso, smoke post-deploy y notas operativas) + `render.yaml` (Blueprint). Requiere plataformas de Kevin (AGENTS.md §5: deploy solo con orden/configuración explícita).
+
+**Verificación ejecutada (evidencia real):**
+- `pytest backend/tests -q --cov=src --cov-fail-under=95` → **104 passed en 5.47 s**; dominio 100%, aplicación 100%, total 99.30%.
+- Playwright: **4/4 passed en 24.3 s, 18.7 s y 19.4 s** (3 pasadas consecutivas, `retries: 0`, cero flakes); reporte HTML en `qa/artifacts/` (gitignored). Con el escenario 5: **5/5 passed en 33.5 s y 31.3 s** (2 pasadas consecutivas más, sin flakes).
+- k6 completo: **0.00% errores (0/17.322 requests), p95 449.35 ms (< 500 ms), p50 239.08 ms, 5.774 iteraciones (54.98/s), 23.096/23.096 checks OK, 50 VUs en meseta**.
+- k6 smoke (`SMOKE=1`, 10 VUs × 30 s): **0.00% errores, p95 71.93 ms, 1.521 iteraciones**.
+- `ruff check backend` → All checks passed · `ruff format --check backend` → 57 files already formatted.
+- Capturas E2E generadas y verificadas visualmente (3 PNG en `docs/capturas/`).
+
+**Archivos creados/modificados clave:**
+- Raíz: `package.json` + `package-lock.json` (@playwright/test), `playwright.config.ts`, `render.yaml`, `docs/despliegue.md`, `.github/workflows/verificacion.yml`, `README.md` (Calidad + capturas), `.gitignore` (+`test-results/`).
+- `qa/`: `e2e/auditoria.spec.ts`, `e2e/reset-db.mjs`, `load/stress_test.js`, `README.md` (guía E2E + k6).
+- Backend: `src/infrastructure/llm/mock_extractor.py` (routing por identidad de ejemplo + 3ª variante), `data/fixtures/extraccion-monto-alto-sin-oc.json` (nuevo), `src/config.py` y `.env.example` (comentarios), `tests/unit/test_extractor.py` (+3 tests).
+- Docs: `docs/capturas/demo-0{1,2,3}-*.png`, specs (tasks/verification de MOD-05, verification de MOD-04 — checklist §2 y DoD cerrados, estado en specs/README.md).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- ADR-05-01: mock por identidad del ejemplo (necesario para RN-5-04 sin LLM_API_KEY; no cambia contrato API/BD/reglas). Fecha estática de la fixture nueva (2026-10-13): mismo riesgo de vencimiento que ADR-02-06.
+- ADR-05-02: reset de BD efímera dentro del comando del `webServer` (Playwright arranca webServers antes del globalSetup → EPERM).
+- ADR-05-03: el E2E no aserta sobre el visor (Chromium headless no renderiza PDFs inline).
+- ADR-05-04: k6 contra BD efímera `qa/artifacts/` (RN-5-05).
+- ADR-05-05: workflow único de verificación sin deploy automático (SPEC-05 §5).
+- ADR-05-06 (observación): p95 449 ms a 50 VUs — cuello de botella en la conexión SQLite compartida con lock; aceptado para la PoC.
+- ADR-05-07: el estado "Auditando…" del escenario 5 se aserta amplificando la latencia del `POST /auditar` con `page.route` (delay 800 ms, solo en el navegador del test; backend real intacto) — la auditoría mock responde en < 10 ms y sin `retries` (RN-5-06) no hay forma estable de asertarlo. También se documenta que el E2E aserta `iframe[src^="blob:"]` (RN-4-04) sin afirmar el render interno del PDF (ADR-05-03 se mantiene).
+
+**Estado exacto al cerrar:**
+- MOD-05: **T-01..T-13 ✓** (QA completo y verificado), **T-14..T-16 ✗** (deploy de cierre pendiente de plataformas/orden de Kevin). Módulos 00–04 🟢 (MOD-04 con DoD 5/5: checklist §2 cerrado por el E2E) · 05 🟡.
+
+**Próximos pasos para la próxima sesión:**
+1. Deploy de cierre (T-14..T-16) siguiendo `docs/despliegue.md`: push a GitHub → Render (Blueprint `render.yaml`) → Vercel con `VITE_API_URL` → `CORS_ORIGINS` → smoke post-deploy → marcar T-14..T-16, DoD §5 completo y MOD-05 🟢 en `specs/README.md`.
+2. Si Kevin carga `backend/.env` con `LLM_API_KEY`: verificaciones con `EXTRACTOR_MODE=llm` pendientes (MOD-02 §2 + ejemplo R4 en la UI) y registrar costo.
+3. Opcional: `DoD` para la revisión final global (queda 1 ítem bloqueado solo por el deploy).
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM (todo el QA corre en modo mock, RN-5-01; el modo `llm` sigue pendiente de la key).
