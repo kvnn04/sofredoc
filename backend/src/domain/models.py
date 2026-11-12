@@ -59,3 +59,24 @@ class ResultadoAuditoria(BaseModel):
         """APROBADO solo si todas las reglas pasan; cualquier fallo => RECHAZADO."""
         estado = "APROBADO" if all(r.aprobado for r in reglas) else "RECHAZADO"
         return cls(estado=estado, reglas=reglas)
+
+
+class RegistroAuditoria(BaseModel):
+    """Auditoría completa tal como se persiste en el historial y se sirve (MOD-03).
+
+    `ERROR_EXTRACCION` es un estado de tabla (trazabilidad, RN-3-03): no alcanza
+    al semáforo de reglas, por eso `reglas_evaluadas` queda vacía en ese caso.
+    """
+
+    id: str  # `aud_` + 8 hex (convención global de specs/README.md)
+    nombre_archivo: str
+    estado: Literal["APROBADO", "RECHAZADO", "ERROR_EXTRACCION"]
+    cuit_emisor: str | None = None  # NULL si la extracción falló
+    monto_total: Decimal | None = None  # NULL si la extracción falló
+    datos_extraidos: dict | None = None  # FacturaExtraida serializada (JSON) o None
+    reglas_evaluadas: list[ReglaResultado] = Field(default_factory=list)
+    json_crudo_ia: dict | None = None  # trazabilidad del output crudo del LLM
+    tiempo_ejecucion_ms: int = Field(ge=0)
+    latencia_extraccion_ms: int = Field(ge=0)  # etapa IA
+    latencia_reglas_ms: int = Field(ge=0)  # etapa motor de reglas
+    creado_en: str  # ISO 8601 UTC (YYYY-MM-DDTHH:MM:SSZ)

@@ -4,10 +4,10 @@
 
 ## Fase 1: Persistencia (Infraestructura)
 
-- [ ] **T-01:** Definir el puerto `AuditoriaRepositoryPort` (`guardar`, `listar(limit, offset)`, `obtener(id)`) en `backend/src/domain/ports/`.
-- [ ] **T-02:** Crear `backend/src/infrastructure/db/esquema.sql` con el DDL de `02-design.md` §2 y aplicarlo al arranque (`CREATE TABLE IF NOT EXISTS` + índices + `PRAGMA journal_mode=WAL`).
-- [ ] **T-03:** Implementar `SqliteAuditoriaRepository` en `backend/src/infrastructure/db/sqlite_repository.py`: conexión configurable por `DB_PATH`, `check_same_thread=False`, serialización/deserialización JSON de columnas, mapeo fila → modelo.
-- [ ] **T-04:** Crear `backend/scripts/generar_ejemplos.py` (usando `reportlab`) que genera los 3 PDFs en `backend/data/ejemplos/` con fechas relativas (hoy − 5 / − 20 / − 30 días) y los datos de ejemplo definidos en la matriz de ejemplos (ver abajo); ejecutarlo y verificar los PDFs.
+- [x] **T-01:** Definir el puerto `AuditoriaRepositoryPort` (`guardar`, `listar(limit, offset)`, `obtener(id)`) en `backend/src/domain/ports/`.
+- [x] **T-02:** Crear `backend/src/infrastructure/db/esquema.sql` con el DDL de `02-design.md` §2 y aplicarlo al arranque (`CREATE TABLE IF NOT EXISTS` + índices + `PRAGMA journal_mode=WAL`).
+- [x] **T-03:** Implementar `SqliteAuditoriaRepository` en `backend/src/infrastructure/db/sqlite_repository.py`: conexión configurable por `DB_PATH`, `check_same_thread=False`, serialización/deserialización JSON de columnas, mapeo fila → modelo.
+- [x] **T-04:** Crear `backend/scripts/generar_ejemplos.py` (usando `reportlab`) que genera los 3 PDFs en `backend/data/ejemplos/` con fechas relativas (hoy − 5 / − 20 / − 30 días) y los datos de ejemplo definidos en la matriz de ejemplos (ver abajo); ejecutarlo y verificar los PDFs.
 
 **Matriz de ejemplos (fuente única para script y tests):**
 
