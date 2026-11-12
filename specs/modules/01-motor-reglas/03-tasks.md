@@ -4,10 +4,10 @@
 
 ## Fase 1: Dominio y Puertos (Core)
 
-- [ ] **T-01:** Crear `backend/src/domain/models.py` con `ItemFactura`, `FacturaExtraida`, `ReglaResultado` y `ResultadoAuditoria` (incl. `desde_reglas`) según `02-design.md` §2.
-- [ ] **T-02:** Implementar `backend/src/domain/value_objects/cuit.py` (VO `CUIT` con normalización de guiones, validación de 11 dígitos y dígito verificador Módulo 11).
-- [ ] **T-03:** Definir puertos: `PadronProveedoresPort` (`buscar(cuit) -> Optional[Proveedor]`) y `ClockPort` (`hoy() -> date`) en `backend/src/domain/ports/`.
-- [ ] **T-04:** Crear `ContextoAuditoria` y el `Protocol Regla` en `backend/src/domain/rules/base.py`.
+- [x] **T-01:** Crear `backend/src/domain/models.py` con `ItemFactura`, `FacturaExtraida`, `ReglaResultado` y `ResultadoAuditoria` (incl. `desde_reglas`) según `02-design.md` §2.
+- [x] **T-02:** Implementar `backend/src/domain/value_objects/cuit.py` (VO `CUIT` con normalización de guiones, validación de 11 dígitos y dígito verificador Módulo 11).
+- [x] **T-03:** Definir puertos: `PadronProveedoresPort` (`buscar(cuit) -> Optional[Proveedor]`) y `ClockPort` (`hoy() -> date`) en `backend/src/domain/ports/`.
+- [x] **T-04:** Crear `ContextoAuditoria` y el `Protocol Regla` en `backend/src/domain/rules/base.py`.
 
 ## Fase 2: Aplicación y Reglas de Negocio
 
