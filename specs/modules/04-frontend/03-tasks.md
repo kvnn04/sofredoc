@@ -4,9 +4,9 @@
 
 ## Fase 1: Dominio e Infraestructura (Contrato)
 
-- [ ] **T-01:** Crear `frontend/src/domain/types.ts` con el espejo exacto del contrato API (MOD-03 §3) según `02-design.md` §2.
-- [ ] **T-02:** Implementar `frontend/src/infrastructure/apiClient.ts`: base URL desde `VITE_API_URL`, wrapper `fetch` con normalización de errores a `ErrorApi`, y las 6 funciones del contrato (auditar archivo/ejemplo, ejemplos, pdf, historial, detalle).
-- [ ] **T-03:** Implementar `auditarEjemplo(id)`: descargar `GET /ejemplos/{id}/pdf` como blob → `File` → `POST /auditar` (un solo contrato para ejemplos y uploads).
+- [x] **T-01:** Crear `frontend/src/domain/types.ts` con el espejo exacto del contrato API (MOD-03 §3) según `02-design.md` §2.
+- [x] **T-02:** Implementar `frontend/src/infrastructure/apiClient.ts`: base URL desde `VITE_API_URL`, wrapper `fetch` con normalización de errores a `ErrorApi`, y las 6 funciones del contrato (auditar archivo/ejemplo, ejemplos, pdf, historial, detalle).
+- [x] **T-03:** Implementar `auditarEjemplo(id)`: descargar `GET /ejemplos/{id}/pdf` como blob → `File` → `POST /auditar` (un solo contrato para ejemplos y uploads).
 
 ## Fase 2: Aplicación (Hooks)
 
