@@ -11,12 +11,12 @@
 
 ## Fase 2: Aplicación y Reglas de Negocio
 
-- [ ] **T-05:** Implementar `R1IntegridadCuit` en `backend/src/domain/rules/r1_cuit.py` → `ERROR_CUIT_INVALIDO`.
-- [ ] **T-06:** Implementar `R2ProveedorHabilitado` en `backend/src/domain/rules/r2_proveedor.py` → `PROVEEDOR_NO_REGISTRADO` (ausente o inactivo).
-- [ ] **T-07:** Implementar `R3ConsistenciaMatematica` en `backend/src/domain/rules/r3_matematica.py` → `DISCREPANCIA_CONTABLE` (tolerancia ± $1.00, `Decimal`; incluir `detalles` con calculado vs declarado).
-- [ ] **T-08:** Implementar `R4TopeSinOrdenCompra` en `backend/src/domain/rules/r4_orden_compra.py` → `FALTA_ORDEN_COMPRA` (tope estricto `> 500000`).
-- [ ] **T-09:** Implementar `R5VigenciaComprobante` en `backend/src/domain/rules/r5_vigencia.py` → `COMPROBANTE_VENCIDO` (futura o > 60 días; hoy − fecha == 60 aprueba).
-- [ ] **T-10:** Implementar el evaluador `backend/src/domain/rules/engine.py`: **regla de admisión R0** (si `tipo_comprobante="REMITO"` → `REMITO_NO_AUDITABLE`, estado RECHAZADO y se corta el flujo); en caso contrario ejecuta R1→R5 **siempre todas**, arma `ResultadoAuditoria.desde_reglas` y acepta una lista de reglas inyectable (facilita tests).
+- [x] **T-05:** Implementar `R1IntegridadCuit` en `backend/src/domain/rules/r1_cuit.py` → `ERROR_CUIT_INVALIDO`.
+- [x] **T-06:** Implementar `R2ProveedorHabilitado` en `backend/src/domain/rules/r2_proveedor.py` → `PROVEEDOR_NO_REGISTRADO` (ausente o inactivo).
+- [x] **T-07:** Implementar `R3ConsistenciaMatematica` en `backend/src/domain/rules/r3_matematica.py` → `DISCREPANCIA_CONTABLE` (tolerancia ± $1.00, `Decimal`; incluir `detalles` con calculado vs declarado).
+- [x] **T-08:** Implementar `R4TopeSinOrdenCompra` en `backend/src/domain/rules/r4_orden_compra.py` → `FALTA_ORDEN_COMPRA` (tope estricto `> 500000`).
+- [x] **T-09:** Implementar `R5VigenciaComprobante` en `backend/src/domain/rules/r5_vigencia.py` → `COMPROBANTE_VENCIDO` (futura o > 60 días; hoy − fecha == 60 aprueba).
+- [x] **T-10:** Implementar el evaluador `backend/src/domain/rules/engine.py`: **regla de admisión R0** (si `tipo_comprobante="REMITO"` → `REMITO_NO_AUDITABLE`, estado RECHAZADO y se corta el flujo); en caso contrario ejecuta R1→R5 **siempre todas**, arma `ResultadoAuditoria.desde_reglas` y acepta una lista de reglas inyectable (facilita tests).
 
 ## Fase 3: Infraestructura (Adaptador de Padrón)
 
