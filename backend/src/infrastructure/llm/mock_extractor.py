@@ -26,9 +26,7 @@ class MockExtractor:
 
     def __init__(self, directorio: Path, variante: str = "aprobada") -> None:
         if variante not in VARIANTES:
-            raise ValueError(
-                f"MOCK_VARIANT='{variante}' inválida; variantes: {sorted(VARIANTES)}"
-            )
+            raise ValueError(f"MOCK_VARIANT='{variante}' inválida; variantes: {sorted(VARIANTES)}")
         self._variante = variante
         ruta = directorio / VARIANTES[variante]
         if not ruta.is_file():

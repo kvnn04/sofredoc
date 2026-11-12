@@ -6,6 +6,7 @@ pydantic>=2.9
 pydantic-settings>=2.5
 python-multipart>=0.0.9
 pypdf>=5.0
+openai>=1.40  # SDK del proveedor de Structured Outputs (DESIGN-02 §4; encapsulado en llm/client.py)
 tzdata>=2024.1 ; sys_platform == "win32"  # base de zonas para zoneinfo (reloj de negocio R5)
 
 # QA / calidad (dev)
