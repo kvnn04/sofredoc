@@ -17,9 +17,9 @@
 
 ## Fase 3: Pruebas de Carga con k6
 
-- [ ] **T-08:** Implementar `qa/load/stress_test.js` con las 3 etapas (rampa 50 VUs, meseta 1 min, drenaje) y los thresholds de `02-design.md` §3.
-- [ ] **T-09:** Ejecutar `k6 run qa/load/stress_test.js` contra backend mock y registrar los resultados reales (p50, p95, tasa de error, iteraciones/s) en la tabla de resultados de `04-verification.md`.
-- [ ] **T-10:** Smoke de carga ligero opcional para CI: `target: 10 VUs, duration: 30s` (mismo script con `options.vus` sobreescrito por env `SMOKE=1`).
+- [x] **T-08:** Implementar `qa/load/stress_test.js` con las 3 etapas (rampa 50 VUs, meseta 1 min, drenaje) y los thresholds de `02-design.md` §3.
+- [x] **T-09:** Ejecutar `k6 run qa/load/stress_test.js` contra backend mock y registrar los resultados reales (p50, p95, tasa de error, iteraciones/s) en la tabla de resultados de `04-verification.md`.
+- [x] **T-10:** Smoke de carga ligero opcional para CI: `target: 10 VUs, duration: 30s` (mismo script con `options.vus` sobreescrito por env `SMOKE=1`).
 
 ## Fase 4: Integración y Cierre
 

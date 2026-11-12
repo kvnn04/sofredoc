@@ -45,11 +45,24 @@ k6 run qa/load/stress_test.js
 
 ### Umbrales (SLOs / SLAs)
 
+Corrida completa (T-09, 2026-11-12): backend uvicorn `EXTRACTOR_MODE=mock` en `:8000` con
+`DB_PATH=qa/artifacts/k6-sofredoc.db` (efímera, RN-5-05). Escenario: rampa 30 s a 50 VUs,
+meseta 60 s, drenaje 15 s (105 s totales). Throughput: **164,95 req/s** (17.322 requests,
+5.774 iteraciones a 54,98/s), 23.096/23.096 checks OK.
+
 | Métrica | Umbral | Resultado obtenido | ✅/❌ |
 | :--- | :--- | :--- | :---: |
-| Tasa de error (`http_req_failed`) | < 1% | *(completar tras T-09)* | — |
-| Latencia p95 (`http_req_duration`) | < 500 ms | *(completar tras T-09)* | — |
-| Concurrencia objetivo | 50 VUs | 50 VUs en meseta | — |
+| Tasa de error (`http_req_failed`) | < 1% | **0.00%** (0 de 17.322 requests) | ✅ |
+| Latencia p95 (`http_req_duration`) | < 500 ms | **449.35 ms** (p50 = 239.08 ms) | ✅ |
+| Concurrencia objetivo | 50 VUs | 50 VUs en meseta (60 s) | ✅ |
+
+Smoke para CI (T-10, `SMOKE=1`): 10 VUs × 30 s → p95 **71.93 ms**, tasa de error **0.00%**,
+1.521 iteraciones (50,5/s), 6.084/6.084 checks OK.
+
+Observación: a 50 VUs el p95 (449 ms) queda cerca del umbral: el cuello de botella es la
+conexión SQLite compartida con lock (el repositorio serializa inserts y lecturas), no la
+extracción mock (< 10 ms). Para la PoC es aceptable; escalar a Postgres/pool de conexiones
+está fuera de alcance (nota de DESIGN-05 §5).
 
 ## 4. Registro de Decisiones de Arquitectura (ADR Log)
 
