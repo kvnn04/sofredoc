@@ -4,10 +4,10 @@
 
 ## Fase 1: Organización de Suites Pytest
 
-- [ ] **T-01:** Reorganizar `backend/tests/` en `unit/` + `integration/` con `__init__.py` y `conftest.py` por capa (fixtures `factura(**overrides)`, clock fijo `2026-11-12`, padrón stub).
-- [ ] **T-02:** Migrar/verificar que los tests de MOD-01 (reglas + CUIT + engine) y MOD-02 (extractor) viven en `unit/` y siguen en verde.
-- [ ] **T-03:** Configurar el gate de cobertura: `pytest backend/tests --cov=src --cov-fail-under=95 --cov-report=term-missing` con los gates por carpeta exigidos (dominio 100%, aplicación > 90%) — los de `integration` cuentan en la medición de `application/`.
-- [ ] **T-04:** Asegurar que `integration/` usa SQLite en archivo temporal y `EXTRACTOR_MODE=mock` (ninguna llamada de red en ningún test).
+- [x] **T-01:** Reorganizar `backend/tests/` en `unit/` + `integration/` con `__init__.py` y `conftest.py` por capa (fixtures `factura(**overrides)`, clock fijo `2026-11-12`, padrón stub). *(Estructura ya creada en MOD-01..03; verificada en esta sesión.)*
+- [x] **T-02:** Migrar/verificar que los tests de MOD-01 (reglas + CUIT + engine) y MOD-02 (extractor) viven en `unit/` y siguen en verde.
+- [x] **T-03:** Configurar el gate de cobertura: `pytest backend/tests --cov=src --cov-fail-under=95 --cov-report=term-missing` con los gates por carpeta exigidos (dominio 100%, aplicación > 90%) — los de `integration` cuentan en la medición de `application/`.
+- [x] **T-04:** Asegurar que `integration/` usa SQLite en archivo temporal y `EXTRACTOR_MODE=mock` (ninguna llamada de red en ningún test).
 
 ## Fase 2: E2E con Playwright
 
