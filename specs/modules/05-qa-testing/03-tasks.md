@@ -12,7 +12,7 @@
 ## Fase 2: E2E con Playwright
 
 - [x] **T-05:** Configurar Playwright en la raíz: `playwright.config.ts` (baseURL `http://localhost:5173`, Chromium, `retries: 0`, reporter HTML) y devDependency `@playwright/test`.
-- [x] **T-06:** Implementar `qa/e2e/auditoria.spec.ts` con los 4 escenarios obligatorios de `02-design.md` §3 (3 ejemplos con sus estados esperados + JSON inspector/historial). *(Requirió ADR-05-01: el mock resuelve la fixture por identidad del ejemplo.)*
+- [x] **T-06:** Implementar `qa/e2e/auditoria.spec.ts` con los 4 escenarios obligatorios de `02-design.md` §3 (3 ejemplos con sus estados esperados + JSON inspector/historial). *(Requirió ADR-05-01: el mock resuelve la fixture por identidad del ejemplo.)* *(Extensión: escenario 5 con la subida propia de RN-4-03/RN-4-04 y el estado "Auditando…" — cierra el checklist §2 de MOD-04, ADR-04-07/ADR-05-07.)*
 - [x] **T-07:** Correr la suite dos veces consecutivas en verde (verificación anti-flake) y versionar `qa/README.md` con instrucciones de ejecución (backend mock + frontend + `npx playwright test`).
 
 ## Fase 3: Pruebas de Carga con k6

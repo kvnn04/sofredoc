@@ -32,7 +32,8 @@ npx playwright test qa/e2e/auditoria.spec.ts
 - [x] Validar visualización del panel de JSON Pydantic (plegado → desplegado → copiable, Pydantic + crudo IA).
 - [x] Verificar el desglose de latencia por etapa (IA / reglas / total) junto al badge de estado.
 - [x] Historial: ≥ 3 filas tras los 3 escenarios, con latencia en ms y recarga de detalle.
-- [x] Dos pasadas consecutivas en verde (cero flakes, `retries: 0`). *(Se corrieron 3 pasadas: 24,3 s / 18,7 s / 19,4 s — 4/4 passed cada una.)*
+- [x] Subida propia (CU-05, RN-4-03/RN-4-04): `.txt` → banner `PDF_INVALIDO`, 6 MB → `ARCHIVO_MUY_GRANDE`, ambos sin perder el empty-state; PDF real → `APROBADO` con el visor apuntando a `iframe[src^="blob:"]` y estado "Auditando…" (botón deshabilitado + skeleton) asertado amplificando la latencia del POST con `page.route` (ADR-05-07).
+- [x] Dos pasadas consecutivas en verde (cero flakes, `retries: 0`). *(4 escenarios: 3 pasadas 24,3 / 18,7 / 19,4 s. Con el escenario 5 de subida propia: 2 pasadas más, 33,5 s / 31,3 s — 5/5 passed cada una.)*
 
 ## 3. Pruebas de Estrés y Rendimiento (k6)
 
@@ -80,13 +81,14 @@ está fuera de alcance (nota de DESIGN-05 §5).
 | 2026-11-12 | **ADR-05-04:** k6 corre contra BD efímera `qa/artifacts/k6-sofredoc.db` | RN-5-05: ningún test de carga toca `backend/data/sofredoc.db`. | Medición sobre SQLite en disco, igual que la corrida local. |
 | 2026-11-12 | **ADR-05-05:** workflow único de verificación, sin deploy automático | SPEC-05 §5: el deploy de cierre es manual/scriptado; CI valida calidad en cada push. | Orden `pytest → ruff → build → playwright → k6 smoke` con reportes como artefactos. |
 | 2026-11-12 | **ADR-05-06 (observación):** p95 de 449 ms a 50 VUs, cerca del umbral | Cuello de botella: la conexión SQLite compartida con lock serializa inserts y lecturas (la extracción mock tarda < 10 ms). | Aceptable para la PoC; escalar a Postgres/pool de conexiones queda fuera de alcance (nota de DESIGN-05 §5). |
+| 2026-11-12 | **ADR-05-07:** el estado "Auditando…" del escenario 5 se aserta amplificando la latencia del `POST /auditar` con `page.route` (delay 800 ms); backend real intacto. | La auditoría mock responde en < 10 ms: el estado de carga es demasiado breve para asertarlo de forma estable sin `retries` (RN-5-06). El delay se agrega solo en el navegador del test. | El E2E verifica spinner + botón deshabilitado + skeleton sin flake; también aserta que el visor recibe `iframe[src^="blob:"]` (RN-4-04) sin afirmar el render interno del PDF (ADR-05-03 se mantiene). |
 
 ## 5. Criterio de Aceptación Final (Definition of Done) — Proyecto Completo
 
 - [ ] Todas las tareas de `03-tasks.md` de **los 6 módulos** están marcadas como `[x]`. *(MOD-00..MOD-04 completos; MOD-05 queda con T-14..T-16 — deploy de cierre — pendientes de las plataformas de Kevin.)*
 - [x] Todos los tests de Pytest pasan en verde (`unit` + `integration`, < 30 s, sin red). *(104 passed en 5.47 s.)*
 - [x] Cobertura: dominio 100%, aplicación > 90% (gate activo). *(Dominio 100%, aplicación 100%, total 99.30% con `--cov-fail-under=95`.)*
-- [x] Los tests de Playwright se ejecutan correctamente sin flakiness (2 pasadas). *(3 pasadas consecutivas: 24,3 / 18,7 / 19,4 s, `retries: 0`.)*
+- [x] Los tests de Playwright se ejecutan correctamente sin flakiness (2 pasadas). *(Con el escenario 5 de subida propia: 5/5 en 2 pasadas consecutivas (33,5 s / 31,3 s), `retries: 0`; antes, 4/4 en 3 pasadas.)*
 - [x] k6 cumple con los SLAs de latencia (p95 < 500 ms) y tasa de error (< 1%) con 50 VUs en modo mock. *(0.00% errores, p95 449.35 ms — §3.)*
 - [x] Los 3 PDFs de ejemplo son válidos y vigentes (fechas dentro de los 60 días de R5). *(Generados el 2026-11-12 con hoy−5/−20/−30; regenerar `scripts/generar_ejemplos.py` si la demo envejece — lo mismo aplica a la fecha estática de las fixtures del mock.)*
 - [x] La demo completa corre de cero con 2 comandos (backend + frontend) en < 15 s de setup post-instalación. *(Quickstart del README raíz.)*

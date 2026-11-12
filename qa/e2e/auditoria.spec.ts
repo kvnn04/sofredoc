@@ -6,10 +6,16 @@
  * el JSON inspector + historial. Van en `serial` porque el historial acumula
  * las auditorías previas sobre la BD efímera del backend (ver playwright.config.ts).
  *
+ * El escenario 5 cubre la subida de PDFs propios: validaciones client-side de
+ * RN-4-03 (`.txt` → PDF_INVALIDO, > 5 MB → ARCHIVO_MUY_GRANDE) sin perder el
+ * empty-state (CU-05), y el flujo completo con un PDF real (blob en el visor,
+ * RN-4-04). Para asertar el estado "Auditando…" se amplifica la latencia del
+ * POST con `page.route` (el backend real no se toca).
+ *
  * Con `CAPTURAS=1` cada escenario guarda una captura en `docs/capturas/`
  * (para el README); en CI y corridas normales no escribe nada.
  */
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
@@ -43,6 +49,8 @@ test.describe.serial("Flujo de auditoría (demo con 3 ejemplos)", () => {
     await expect(semaforo.getByText(/IA \d+ ms · reglas \d+ ms · .*total \d+ ms/)).toBeVisible();
     // El id de auditoría respeta la convención `aud_` + 8 hex.
     await expect(semaforo.getByText(/^aud_[0-9a-f]{8}$/)).toBeVisible();
+    // El visor recibió el PDF del ejemplo (iframe con la URL de la API).
+    await expect(page.locator('iframe[src*="/api/v1/ejemplos/"]')).toBeVisible();
 
     await captura(page, "demo-01-aprobado.png");
   });
@@ -54,6 +62,9 @@ test.describe.serial("Flujo de auditoría (demo con 3 ejemplos)", () => {
     const semaforo = page.getByRole("region", { name: SEMAFORO });
     await expect(semaforo.getByText("RECHAZADO", { exact: true })).toBeVisible();
     await expect(semaforo.getByText("DISCREPANCIA_CONTABLE")).toBeVisible();
+    // Los montos comparados aparecen en el mensaje de R3 (checklist MOD-04 ítem 4).
+    await expect(semaforo.getByText("$28.200,00")).toBeVisible();
+    await expect(semaforo.getByText("$30.000,00")).toBeVisible();
     // El resto del semáforo sigue en verde: 5 reglas evaluadas.
     await expect(semaforo.getByRole("listitem")).toHaveCount(5);
 
@@ -101,5 +112,60 @@ test.describe.serial("Flujo de auditoría (demo con 3 ejemplos)", () => {
     await page.getByRole("button", { name: /Historial de auditorías/ }).click();
     await expect(filas.first()).toBeVisible();
     await captura(page, "demo-03-json-historial.png");
+  });
+
+  test("5) subida propia: PDF_INVALIDO / ARCHIVO_MUY_GRANDE sin perder estado + flujo completo", async ({ page }) => {
+    await page.goto("/");
+
+    // CU-01 Given: el panel arranca en empty-state.
+    const estadoInicial = page.getByText("Pantalla lista para auditar");
+    await expect(estadoInicial).toBeVisible();
+
+    const banner = page.getByRole("alert");
+    const subir = page.getByRole("button", { name: "Subir un PDF propio (máximo 5 MB)" });
+
+    // a) Un .txt no es un PDF → PDF_INVALIDO (client-side, RN-4-03), sin llamada
+    //    a la API y sin destruir el estado previo (CU-05).
+    await page.setInputFiles('input[type="file"]', {
+      name: "notas.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("esto no es un pdf"),
+    });
+    await expect(banner.getByText("PDF_INVALIDO")).toBeVisible();
+    await expect(estadoInicial).toBeVisible();
+
+    // b) PDF de 6 MB supera el tope de 5 MB → ARCHIVO_MUY_GRANDE (RN-4-03).
+    await page.setInputFiles('input[type="file"]', {
+      name: "factura-grande.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.alloc(6 * 1024 * 1024),
+    });
+    await expect(banner.getByText("ARCHIVO_MUY_GRANDE")).toBeVisible();
+    await expect(estadoInicial).toBeVisible();
+
+    // c) Flujo completo con un PDF real: se amplifica la latencia del POST
+    //    (800 ms) para asertar el estado de carga — el backend queda intacto.
+    await page.route("**/api/v1/auditar", async (ruta) => {
+      await new Promise((res) => setTimeout(res, 800));
+      await ruta.continue();
+    });
+    const pdfReal = readFileSync(resolve("backend/data/ejemplos/factura-aprobada-001.pdf"));
+    await page.setInputFiles('input[type="file"]', {
+      name: "mi-factura.pdf",
+      mimeType: "application/pdf",
+      buffer: pdfReal,
+    });
+    await expect(subir).toBeDisabled();
+    await expect(subir).toContainText("Auditando…");
+    await expect(page.getByText("Auditando documento…")).toBeVisible(); // skeleton
+
+    const semaforo = page.getByRole("region", { name: SEMAFORO });
+    await expect(semaforo.getByText("APROBADO", { exact: true })).toBeVisible();
+    await expect(subir).toBeEnabled();
+    await expect(subir).toContainText("Subir PDF");
+    // El visor muestra el archivo subido como blob URL (RN-4-04).
+    await expect(page.locator('iframe[src^="blob:"]')).toBeVisible();
+
+    await captura(page, "demo-04-subida-propia.png");
   });
 });
