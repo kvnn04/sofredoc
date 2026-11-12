@@ -1,0 +1,24 @@
+{
+  "tipo_comprobante": "FACTURA",
+  "numero_comprobante": "0001-00001234",
+  "cuit_emisor": "30-12345678-1",
+  "razon_social": "Distribuidora Andina S.A.",
+  "fecha_emision": "2026-11-07",
+  "numero_orden_compra": "OC-2026-0042",
+  "items": [
+    {
+      "descripcion": "Resma papel A4 75g",
+      "cantidad": 10,
+      "precio_unitario": 2500.00,
+      "subtotal": 25000.00
+    },
+    {
+      "descripcion": "Tóner HP 85A",
+      "cantidad": 4,
+      "precio_unitario": 800.00,
+      "subtotal": 3200.00
+    }
+  ],
+  "impuestos": 0.00,
+  "monto_total": 30000.00
+}

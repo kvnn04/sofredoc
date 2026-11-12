@@ -30,6 +30,13 @@ class FacturaExtraida(BaseModel):
     monto_total: Decimal = Field(gt=0)
 
 
+class ExtraccionResultado(BaseModel):
+    """Salida del extractor (MOD-02): factura validada + JSON crudo del LLM."""
+
+    factura: FacturaExtraida
+    json_crudo_ia: dict | None = None  # trazabilidad del output crudo (RN-2-04)
+
+
 class ReglaResultado(BaseModel):
     """Resultado individual de una regla (fila del semáforo)."""
 
