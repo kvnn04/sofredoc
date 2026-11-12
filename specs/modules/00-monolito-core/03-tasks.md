@@ -18,6 +18,6 @@
 
 ## Fase 3: Calidad Base
 
-- [ ] **T-08:** Configurar `pytest` (raíz `pyproject.toml` o `pytest.ini`) con `testpaths = backend/tests` y crear `backend/tests/unit/test_smoke.py` que importe la app y haga ping a `/api/v1/health` (TestClient) — debe pasar.
-- [ ] **T-09:** Configurar `ruff` (lint + format) y dejar el código existente en verde.
-- [ ] **T-10:** Redactar el `README.md` raíz con quickstart de 2 comandos (backend + frontend) y tabla de variables de entorno.
+- [x] **T-08:** Configurar `pytest` (raíz `pyproject.toml` o `pytest.ini`) con `testpaths = backend/tests` y crear `backend/tests/unit/test_smoke.py` que importe la app y haga ping a `/api/v1/health` (TestClient) — debe pasar.
+- [x] **T-09:** Configurar `ruff` (lint + format) y dejar el código existente en verde.
+- [x] **T-10:** Redactar el `README.md` raíz con quickstart de 2 comandos (backend + frontend) y tabla de variables de entorno.
