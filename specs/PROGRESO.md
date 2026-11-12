@@ -6,10 +6,10 @@
 
 ## Estado actual (resumen rápido)
 
-- **Fase del proyecto:** Implementación iniciada — **MOD-00, MOD-01 y MOD-02 completos** (dominio + motor de reglas + ingesta PDF/extracción IA, todo en verde con gates de cobertura al 100%).
-- **Siguiente acción concreta:** `MOD-03` Fase 1 → API REST y SQLite según `specs/modules/03-api-sqlite/`.
-- **Módulos:** 00 🟢 Completado · 01 🟢 Completado · 02 🟢 Completado · 03 ⚪ Pendiente · 04 ⚪ Pendiente · 05 ⚪ Pendiente.
-- **Bloqueos:** ninguno. *Nota: la verificación manual de MOD-02 con `EXTRACTOR_MODE=llm` (3 PDFs de ejemplo) queda para la sesión de MOD-03, porque los PDFs se generan ahí (T-04).*
+- **Fase del proyecto:** Implementación iniciada — **MOD-00, MOD-01, MOD-02 y MOD-03 completos** (dominio + reglas + extracción + API REST/SQLite, todo en verde).
+- **Siguiente acción concreta:** `MOD-04` Fase 1 → Frontend Clean Architecture según `specs/modules/04-frontend/`.
+- **Módulos:** 00 🟢 Completado · 01 🟢 Completado · 02 🟢 Completado · 03 🟢 Completado · 04 ⚪ Pendiente · 05 ⚪ Pendiente.
+- **Bloqueos:** ninguno para MOD-04. *Nota: la verificación manual de MOD-02 con `EXTRACTOR_MODE=llm` (3 PDFs de ejemplo, ya generados) sigue pendiente porque no existe `backend/.env` con `LLM_API_KEY` en la máquina; correrla cuando Kevin cargue la key y registrar el costo acá.*
 - **Configuración del usuario (Kevin):** autonomía completa (tests, deps, archivos, commit local, LLM real, push/deploy) · verificación completa obligatoria · desvío menor → ADR y seguir; desvío de contrato/esquema/regla → preguntar · commits por fase.
 - **Protocolo de sesión (misión implícita en AGENTS.md §3):** Kevin escribe una palabra y el agente ya sabe qué hacer — `arrancá` = módulo pendiente completo (anuncia y ejecuta, sin esperar confirmación) · `MOD-XX` / `MOD-XX Fase N` = override · `prueba` = solo próxima fase · `estado` = resumen · `todo` = continuo hasta el final · `DoD` = revisión final. Al cerrar un módulo: bitácora + estado 🟢 en specs/README.md + **esperar al usuario** (no continuar al siguiente módulo por su cuenta).
 
@@ -171,3 +171,36 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM en esta sesión (todo probado con SDK falsificado; el modo `llm` recién se ejercita al tener los PDFs de ejemplo en MOD-03).
+
+### [2026-11-12] Sesión 4 — MOD-03 completo (API REST y SQLite)
+
+**Qué se hizo:**
+- Fase 1 (T-01..T-04): puerto `AuditoriaRepositoryPort` + modelo `RegistroAuditoria` en dominio; `infrastructure/db/esquema.sql` (DDL + índice, aplicado al arranque con `PRAGMA journal_mode=WAL`); `SqliteAuditoriaRepository` (una conexión compartida `check_same_thread=False`, lock `threading`, `cerrar()`, mapeo fila↔modelo con JSON); `scripts/generar_ejemplos.py` con `reportlab` genera los 3 PDFs en `backend/data/ejemplos/` (fechas hoy−5/−20/−30, TZ Buenos Aires) — PDFs verificados con pypdf y commiteados.
+- Fase 2 (T-05..T-10): `AuditarComprobanteUseCase` (inyección de 5 puertos, latencias por etapa con `perf_counter`, `ERROR_EXTRACCION` persistido antes de propagar 502); `presentation/dtos.py` (ReglaResultadoDTO, RegistroAuditoriaDTO, ResumenAuditoriaDTO; montos Decimal→número 2 dec); routers `auditar` (413/422 pre-use case), `ejemplos` (catálogo estático + `StreamingResponse`), `historial` (limit/offset con defaults 20/0, detalle 404 tipado); `presentation/errores.py` (handlers → cuerpo `{"error": {codigo, mensaje}}`).
+- Fase 3 (T-11..T-13): wire-up en `main.py` (routers + tablas al arranque + factory del extractor; `app` construido perezosamente vía `__getattr__` para no crear la BD real al importar; lifespan cierra la conexión); `tests/integration/test_api_auditar.py` (12 tests: filas 1–7 y 11 de la matriz + REMITO R0 + extensión .pdf con MIME desconocido + ids únicos); `test_api_historial.py` (9 tests: filas 8–10 + offset + vacío + PDF faltante); conftest de integración con reloj fijo (2026-11-12), stubs de extractor y SQLite en `tmp_path`.
+
+**Verificación ejecutada (evidencia real):**
+- `pytest tests/integration -v` → **20 passed**; `pytest tests -q` → **104 passed** (0 warnings tras el cierre de conexiones).
+- Gates de cobertura: `domain/` **100%**, `application/auditar_comprobante.py` **100%** (>90% requerido), `infrastructure/db/sqlite_repository.py` **100%** (>90% requerido), `presentation/` routers y dtos **100%**. TOTAL 99% (única excepción: `main.py.__getattr__`, verificado con uvicorn).
+- `ruff check src scripts tests` → All checks passed · `ruff format --check` → 57 files already formatted.
+- Smoke manual con uvicorn real + curl (DoD §5): `/health` ok; `/ejemplos` devuelve los 3 con `url_pdf`; `/ejemplos/{id}/pdf` sirve `application/pdf` (1701 bytes); `POST /auditar` con el ejemplo aprobado → `200 APROBADO` en **34 ms** con datos, 5 reglas verdes, `json_crudo_ia`, latencias `(0, 1, 34)` y `creado_en` UTC; `.txt` → `422 PDF_INVALIDO`; blob 6 MB → `413 ARCHIVO_MUY_GRANDE`; `/historial?limit=5` sin `json_crudo_ia`; `/historial/{id}` con JSON crudo; 404 tipados (`AUDITORIA_NO_ENCONTRADA`, `EJEMPLO_NO_ENCONTRADO`).
+
+**Archivos creados/modificados clave:**
+- `backend/src/domain/`: `models.py` (+`RegistroAuditoria`), `ports/auditoria_repository_port.py`.
+- `backend/src/infrastructure/db/`: `esquema.sql`, `sqlite_repository.py`.
+- `backend/src/application/auditar_comprobante.py`; `backend/src/presentation/`: `dtos.py`, `errores.py`, `routers/{auditar,ejemplos,historial}.py`; `backend/src/main.py` (wire-up + lifespan + `__getattr__`).
+- `backend/scripts/generar_ejemplos.py`; `backend/data/ejemplos/*.pdf` (3 commiteados); `backend/requirements.txt` (+`reportlab>=4.0`); `.gitignore` (+`-shm`/`-wal`).
+- `backend/tests/integration/`: `conftest.py`, `test_api_auditar.py`, `test_api_historial.py`; `backend/tests/unit/test_smoke.py` (aislado con SQLite temporal).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- 7 ADRs en `04-verification.md` §4 (ADR-03-01..07): DTOs con `cuit_emisor`/`monto_total` planos, `app` perezosa por `__getattr__`, lock+cierre de la conexión SQLite, handlers de error con cuerpo §3 (no `HTTPException`/`detail`), R4 probado con extractor stub (mock no cubre ese caso), `reportlab` solo del script, montos de `datos_extraidos` como número. Ninguno cambia contrato API, esquema de BD ni reglas de negocio.
+
+**Estado exacto al cerrar:**
+- MOD-03 **🟢 Completado** (T-01..T-13 ✓; DoD §5: 6/6 ítems en verde). MOD-04..MOD-05 ⚪ Pendientes.
+
+**Próximos pasos para la próxima sesión:**
+1. `arrancá` → **MOD-04** (frontend Clean Architecture): leer los 4 docs de `specs/modules/04-frontend/`; arranca con pantalla dividida contra esta API ya terminada.
+2. Si Kevin carga `backend/.env` con `LLM_API_KEY`: ejecutar la verificación pendiente de MOD-02 §2 con `EXTRACTOR_MODE=llm` sobre los 3 PDFs de ejemplo (registrar costo acá).
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM (no hay `backend/.env` con key en la máquina; el modo `llm` no se pudo ejecutar).

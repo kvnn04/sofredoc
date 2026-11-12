@@ -52,12 +52,19 @@ Cubiertas en MOD-05 (con `EXTRACTOR_MODE=mock` esta API sostiene 50 VUs con p95 
 | 2026-11-12 | Montos `Decimal` → REAL + JSON numérico 2 decimales | Precisión en dominio; legibilidad en UI. | Conversión explícita en DTOs. |
 | 2026-11-12 | Latencia desglosada por etapa (IA / reglas) | Confirmado por el product owner: hace visible la arquitectura híbrida ante el evaluador técnico. | 2 columnas nuevas en SQLite + campos en DTO y UI. |
 | 2026-11-12 | SQLite efímero en deploy (free tier) | Render reinicia el disco en cada deploy; el historial es volátil en producción gratuita. | Nota obligatoria en README y smoke post-deploy (MOD-05 §5). |
+| 2026-11-12 | ADR-03-01: DTOs con `cuit_emisor` y `monto_total` planos | El diseño §2 (esencia) solo los lleva dentro de `datos_extraidos`; el listado del historial los necesita accesibles sin traer `datos_extraidos` completo (y en `ERROR_EXTRACCION` esos datos son NULL). | Campos adicionales (aditivos, no rompen el contrato §3). |
+| 2026-11-12 | ADR-03-02: `app` de `main.py` se construye perezosamente (`__getattr__`) | Importar `src.main` desde los tests no debe crear `data/sofredoc.db` real; `uvicorn src.main:app` sigue funcionando (verificado en el smoke manual). | DoD §5 b-2: los tests no tocan la BD real (smoke usa settings temporales). |
+| 2026-11-12 | ADR-03-03: conexión SQLite con `threading.Lock` + `cerrar()` en lifespan | Los endpoints sync corren en el threadpool de FastAPI; el lock serializa el acceso a la conexión compartida y el cierre evita `ResourceWarning`. | Sin cambios de contrato; robustez bajo concurrencia. |
+| 2026-11-12 | ADR-03-04: errores de presentación vía handlers de excepción (no `HTTPException`) | El contrato §3 exige cuerpo `{"error": {...}}` sin el wrapper `detail` de FastAPI; los routers levantan `ErrorHTTPTipado` y el dominio `ErrorTipificado` se mapea por `codigo`. | Cuerpos de error idénticos a §3 en todos los endpoints. |
+| 2026-11-12 | ADR-03-05: escenario R4 (`FALTA_ORDEN_COMPRA`) se prueba con extractor stub | El mock solo trae variantes `aprobada`/`rechazado` (R3); la fila 3 de la matriz se verifica inyectando un extractor fijo en `create_app`. El flujo end-to-end real con LLM queda en la verificación pendiente de MOD-02 §2. | Sin cambios en `MOCK_VARIANT` ni en contratos. |
+| 2026-11-12 | ADR-03-06: `reportlab` en requirements.txt | Declarada por DESIGN-03 §4 como dependencia única del script `generar_ejemplos.py`; no se usa en `src/` (el dominio y los tests generan PDFs mínimos sin ella). | requirements.txt: `reportlab>=4.0`. |
+| 2026-11-12 | ADR-03-07: montos de `datos_extraidos` como número (no string) | pydantic v2 serializa `Decimal` como string en modo JSON; la convención global exige número con 2 decimales → conversor explícito en el caso de uso. | `monto_total: 384000.0` (número) en JSON, como en el ejemplo §3. |
 
 ## 5. Criterio de Aceptación Final (Definition of Done)
 
-- [ ] Todas las tareas de `03-tasks.md` están marcadas como `[x]`.
-- [ ] Todos los tests de integración pasan en verde contra SQLite temporal (sin tocar `data/sofredoc.db` real).
-- [ ] Los 10 escenarios de la matriz §1 verificados.
-- [ ] Los 3 PDFs de ejemplo existen y los endpoints `/ejemplos` y `/ejemplos/{id}/pdf` los sirven.
-- [ ] `curl` manual de la matriz de contratos reproduce las respuestas de `02-design.md` §3.
-- [ ] Un flujo completo manual (mock mode) audita un PDF en < 2 s end-to-end.
+- [x] Todas las tareas de `03-tasks.md` están marcadas como `[x]`.
+- [x] Todos los tests de integración pasan en verde contra SQLite temporal (sin tocar `data/sofredoc.db` real).
+- [x] Los 10 escenarios de la matriz §1 verificados (11 filas: 1–7 y 11 en `test_api_auditar.py`; 8–10 en `test_api_historial.py`).
+- [x] Los 3 PDFs de ejemplo existen y los endpoints `/ejemplos` y `/ejemplos/{id}/pdf` los sirven.
+- [x] `curl` manual de la matriz de contratos reproduce las respuestas de `02-design.md` §3 (uvicorn real: `/health`, `/ejemplos`, `/ejemplos/{id}/pdf`, `POST /auditar` 200/413/422, `/historial` paginado sin `json_crudo_ia`, `/historial/{id}` con JSON crudo, 404 tipados).
+- [x] Un flujo completo manual (mock mode) audita un PDF en < 2 s end-to-end (34 ms medidos).

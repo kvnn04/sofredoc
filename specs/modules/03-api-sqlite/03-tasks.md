@@ -28,6 +28,6 @@
 
 ## Fase 3: Integración y Tests
 
-- [ ] **T-11:** Wire-up en `main.py`: routers + creación de tablas al arranque + inyección de dependencias (factory del extractor según `EXTRACTOR_MODE`).
-- [ ] **T-12:** Tests de integración `backend/tests/integration/test_api_auditar.py` (TestClient + SQLite temporal + extractor mock): CU-01 APROBADO, CU-02 RECHAZADO con `DISCREPANCIA_CONTABLE` y `FALTA_ORDEN_COMPRA`, CU-03 `413`/`422`, verificación de fila persistida en SQLite.
-- [ ] **T-13:** Tests de integración `backend/tests/integration/test_api_historial.py`: listado paginado, detalle, `404`, y `GET /api/v1/ejemplos` + `/ejemplos/{id}/pdf` (content-type y tamaño > 0).
+- [x] **T-11:** Wire-up en `main.py`: routers + creación de tablas al arranque + inyección de dependencias (factory del extractor según `EXTRACTOR_MODE`).
+- [x] **T-12:** Tests de integración `backend/tests/integration/test_api_auditar.py` (TestClient + SQLite temporal + extractor mock): CU-01 APROBADO, CU-02 RECHAZADO con `DISCREPANCIA_CONTABLE` y `FALTA_ORDEN_COMPRA`, CU-03 `413`/`422`, verificación de fila persistida en SQLite.
+- [x] **T-13:** Tests de integración `backend/tests/integration/test_api_historial.py`: listado paginado, detalle, `404`, y `GET /api/v1/ejemplos` + `/ejemplos/{id}/pdf` (content-type y tamaño > 0).
