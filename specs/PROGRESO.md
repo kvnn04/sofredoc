@@ -6,10 +6,10 @@
 
 ## Estado actual (resumen rápido)
 
-- **Fase del proyecto:** Implementación iniciada — **MOD-00, MOD-01, MOD-02 y MOD-03 completos** (dominio + reglas + extracción + API REST/SQLite, todo en verde).
-- **Siguiente acción concreta:** `MOD-04` Fase 1 → Frontend Clean Architecture según `specs/modules/04-frontend/`.
-- **Módulos:** 00 🟢 Completado · 01 🟢 Completado · 02 🟢 Completado · 03 🟢 Completado · 04 ⚪ Pendiente · 05 ⚪ Pendiente.
-- **Bloqueos:** ninguno para MOD-04. *Nota: la verificación manual de MOD-02 con `EXTRACTOR_MODE=llm` (3 PDFs de ejemplo, ya generados) sigue pendiente porque no existe `backend/.env` con `LLM_API_KEY` en la máquina; correrla cuando Kevin cargue la key y registrar el costo acá.*
+- **Fase del proyecto:** Implementación iniciada — **MOD-00..MOD-04 completos** (core + reglas + extracción + API/SQLite + **frontend de pantalla dividida**, todo en verde).
+- **Siguiente acción concreta:** `MOD-05` Fase 1 → QA (Pytest ya cubierto; Playwright e2e en `qa/e2e/` + k6 en `qa/load/` + deploy Render/Vercel) según `specs/modules/05-qa-testing/`.
+- **Módulos:** 00 🟢 · 01 🟢 · 02 🟢 · 03 🟢 · 04 🟢 (checklist visual §2 pendiente de pasada de Kevin o de MOD-05 Playwright) · 05 ⚪ Pendiente.
+- **Bloqueos:** ninguno para MOD-05. *Pendientes con LLM real (siguen de sesiones anteriores): verificación de MOD-02 §2 y del ejemplo R4 de la UI con `EXTRACTOR_MODE=llm` — falta `backend/.env` con `LLM_API_KEY`.*
 - **Configuración del usuario (Kevin):** autonomía completa (tests, deps, archivos, commit local, LLM real, push/deploy) · verificación completa obligatoria · desvío menor → ADR y seguir; desvío de contrato/esquema/regla → preguntar · commits por fase.
 - **Protocolo de sesión (misión implícita en AGENTS.md §3):** Kevin escribe una palabra y el agente ya sabe qué hacer — `arrancá` = módulo pendiente completo (anuncia y ejecuta, sin esperar confirmación) · `MOD-XX` / `MOD-XX Fase N` = override · `prueba` = solo próxima fase · `estado` = resumen · `todo` = continuo hasta el final · `DoD` = revisión final. Al cerrar un módulo: bitácora + estado 🟢 en specs/README.md + **esperar al usuario** (no continuar al siguiente módulo por su cuenta).
 
@@ -173,7 +173,6 @@
 - Sin llamadas LLM en esta sesión (todo probado con SDK falsificado; el modo `llm` recién se ejercita al tener los PDFs de ejemplo en MOD-03).
 
 ### [2026-11-12] Sesión 4 — MOD-03 completo (API REST y SQLite)
-
 **Qué se hizo:**
 - Fase 1 (T-01..T-04): puerto `AuditoriaRepositoryPort` + modelo `RegistroAuditoria` en dominio; `infrastructure/db/esquema.sql` (DDL + índice, aplicado al arranque con `PRAGMA journal_mode=WAL`); `SqliteAuditoriaRepository` (una conexión compartida `check_same_thread=False`, lock `threading`, `cerrar()`, mapeo fila↔modelo con JSON); `scripts/generar_ejemplos.py` con `reportlab` genera los 3 PDFs en `backend/data/ejemplos/` (fechas hoy−5/−20/−30, TZ Buenos Aires) — PDFs verificados con pypdf y commiteados.
 - Fase 2 (T-05..T-10): `AuditarComprobanteUseCase` (inyección de 5 puertos, latencias por etapa con `perf_counter`, `ERROR_EXTRACCION` persistido antes de propagar 502); `presentation/dtos.py` (ReglaResultadoDTO, RegistroAuditoriaDTO, ResumenAuditoriaDTO; montos Decimal→número 2 dec); routers `auditar` (413/422 pre-use case), `ejemplos` (catálogo estático + `StreamingResponse`), `historial` (limit/offset con defaults 20/0, detalle 404 tipado); `presentation/errores.py` (handlers → cuerpo `{"error": {codigo, mensaje}}`).
@@ -204,3 +203,39 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM (no hay `backend/.env` con key en la máquina; el modo `llm` no se pudo ejecutar).
+
+### [2026-11-12] Sesión 5 — MOD-04 completo (Frontend Clean Architecture)
+
+**Qué se hizo:**
+- Fase 1 (T-01..T-03): `domain/types.ts` — espejo del contrato real de MOD-03 (ResultadoAuditoria con `cuit_emisor`/`monto_total` planos, ReglaResultado con `detalles` y `R0`, ResumenAuditoria sin `json_crudo_ia`, Ejemplo con `url_pdf`, CuerpoError); `infrastructure/apiClient.ts` — base `VITE_API_URL` (vacía → proxy `/api/v1`), `ErrorApi` con normalización del cuerpo `{"error":{codigo,mensaje}}` + red caída, `validarPdf` client-side (formato + ≤ 5 MB), y las 6 funciones: `auditarArchivo`, `auditarEjemplo` (GET pdf → blob → File → POST, T-03), `listarEjemplos`, `obtenerPdfEjemplo`, `listarHistorial`, `obtenerAuditoria`.
+- Fase 2 (T-04..T-06): `useEjemplos()` (catálogo al montar + recargar), `useAuditoria()` (máquina `idle|loading|resultado|error`, guarda `pdfUrl` — URL de ejemplo o blob URL con revocación al reemplazar/desmontar, `verDetalle()` para CU-04, conserva el resultado previo si luego hay error → CU-05), `useHistorial()` (paginado limit 20 + `refrescar()`/`avanzar`/`retroceder`).
+- Fase 3 (T-07..T-14): `App.tsx` pantalla dividida (`lg:grid-cols-[2fr_3fr]`, se apila < 1024px) con estados visual (empty-state, skeleton "Auditando documento…", resultado, BannerError encima sin perder pantalla); `BarraSuperior` (3 botones de ejemplo con chip del resultado esperado + tooltip descripción, Subir PDF con input oculto `accept="application/pdf"`, spinner y deshabilitados durante auditoría); `VisorPDF` (iframe + fallback de embed + "abrir en otra pestaña"); `SemaforoReglas` (badge APROBADO/RECHAZADO/ERROR DE EXTRACCIÓN + desglose `IA/reglas/total` + id + filas por regla con `codigo_error` monospace rojo); `TablaDatos` (cabecera + ítems + total, `es-AR`); `JsonInspector` (plegable con `datos_extraidos` + `json_crudo_ia`, Copiar por sección); `Historial` (tabla plegable, estado con chip de color, latencia ms, paginación, fila seleccionada re-carga detalle); `BannerError` (codigo + mensaje, acción opcional).
+- Fase 4 (T-15..T-16): `presentation/formato.ts` con `Intl` es-AR (montos ARS, cantidades, fechas por partes sin TZ, timestamps), aria-labels/tooltips/foco, build tsc strict + oxlint en verde, quickstart de `README.md` actualizado (pantalla operativa + `VITE_API_URL` para Vercel).
+
+**Verificación ejecutada (evidencia real):**
+- `npm run build` → `tsc -b && vite build` ✓ (2095 módulos, ~2 s). `npm run lint` (oxlint) → sin hallazgos (2 avisos `set-state-in-effect` de la Fase 2 corregidos moviendo los `setState` a handlers).
+- Smoke full-stack real: `uvicorn :8000` (mock) + `npm run dev`; vía proxy :5173 → `/health` 200 mock; `GET /ejemplos` 200 (3 ejemplos, contrato exacto); flujo completo `auditarEjemplo` (curl: descarga PDF → multipart POST) → `200 APROBADO` 5 reglas verdes, latencias `(IA 0, reglas 4, total 57) ms`, id `aud_*`.
+- Camino RECHAZADO con segundo backend `:8001` + `MOCK_VARIANT=rechazado` → `RECHAZADO`, R3 roja `DISCREPANCIA_CONTABLE` con montos comparados y 4 verdes. *Con la variante default todos los PDFs dan APROBADO (mock determinista, RN-2-05 — no es un bug del frontend).*
+- Errores: `.txt` → `422 PDF_INVALIDO`; blob 6 MB → `413 ARCHIVO_MUY_GRANDE` (cuerpo `{"error":{codigo,mensaje}}` exacto). Historial: listado 200 sin `json_crudo_ia` con latencia ms, detalle 200 con JSON crudo, `404 AUDITORIA_NO_ENCONTRADA` tipado.
+- Grep anti-lógica-duplicada: solo literales de render (chips/badges/tipos del contrato); sin tope $500.000, sin módulo 11, sin cálculos en el cliente.
+- Regresión: `pytest tests -q` → **104 passed** (3.3 s).
+
+**Archivos creados/modificados clave:**
+- `frontend/src/domain/`: `types.ts` (nuevo), `index.ts` (re-export). `frontend/src/infrastructure/apiClient.ts` (reescrito).
+- `frontend/src/application/`: `useEjemplos.ts`, `useAuditoria.ts`, `useHistorial.ts`, `index.ts`.
+- `frontend/src/presentation/`: `App.tsx` (reescrito), `formato.ts`, `components/{BarraSuperior,VisorPDF,SemaforoReglas,TablaDatos,JsonInspector,Historial,BannerError}.tsx`.
+- `README.md` (quickstart + lint), `specs/modules/04-frontend/{03-tasks,04-verification}.md`, `specs/README.md` (estado MOD-04).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- 3 ADRs en `04-verification.md` §4 (ADR-04-05..07): espejo de tipos alineado al contrato real de la API (el design §2 era boceto: `url_pdf`, planos, `detalles`, `R0`, `resultado_esperado: string`), default de base vía proxy `/api/v1` cuando `VITE_API_URL` está vacía, y **diferimiento de la pasada visual del checklist §2 a MOD-05** (Playwright automatiza esos 10 escenarios; en esta sesión se verificaron a nivel API/contrato con HTTP real). Ninguno cambia contrato API, esquema de BD ni reglas de negocio.
+
+**Estado exacto al cerrar:**
+- MOD-04 **🟢 Completado** (T-01..T-16 ✓; DoD §5: 3/5 en verde + 2 pendientes solo de pasada visual documentados con ADR-04-07). MOD-05 ⚪ Pendiente.
+
+**Próximos pasos para la próxima sesión:**
+1. **(2 min, Kevin)** Pasada visual de la checklist §2 con backend mock + frontend dev (`arrancá` backend y frontend): empty-state, 3 ejemplos, PDF en el visor, semáforo con latencias, JSON + Copiar, historial, banner 413/422, spinner. Marcar los 10 ítems y los 2 pendientes del DoD §5.
+2. `arrancá` → **MOD-05** (QA): leer los 4 docs de `specs/modules/05-qa-testing/`; arranca por Playwright en `qa/e2e/auditoria.spec.ts` (automatiza exactamente la checklist de MOD-04) y k6 en `qa/load/`.
+3. Si Kevin carga `backend/.env` con `LLM_API_KEY`: verificaciones con `EXTRACTOR_MODE=llm` pendientes (MOD-02 §2 + ejemplo R4 de la UI) y registrar costo.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM (el frontend corre contra mock; sigue pendiente la key para el modo `llm`).

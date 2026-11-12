@@ -30,6 +30,11 @@ npm run dev
 
 El proxy de desarrollo redirige `/api` → `http://localhost:8000` (configurable con `VITE_API_URL`).
 
+La pantalla dividida (MOD-04) es operativa: 3 ejemplos de 1 click + subida de PDF (≤ 5 MB) a la
+izquierda el visor y a la derecha el semáforo R0–R5, los datos extraídos, el inspector de JSON
+y el panel plegable de historial. Para desplegar el frontend (Vercel), definir
+`VITE_API_URL=https://<backend>/api/v1`.
+
 ## Variables de entorno
 
 Copiar `backend/.env.example` → `backend/.env` y `frontend/.env.example` → `frontend/.env` para personalizar. Los `.env` reales no se versionan.
@@ -61,6 +66,9 @@ backend\.venv\Scripts\python.exe -m pytest backend\tests -v
 # Lint + format (Python)
 backend\.venv\Scripts\python.exe -m ruff check backend
 backend\.venv\Scripts\python.exe -m ruff format backend
+
+# Lint (frontend)
+cd frontend ; npm run lint
 
 # Build de producción (frontend)
 cd frontend ; npm run build

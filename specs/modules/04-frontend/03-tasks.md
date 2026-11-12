@@ -27,5 +27,5 @@
 
 ## Fase 4: Pulido
 
-- [ ] **T-15:** Formateo de montos y fechas con `Intl` (`es-AR`), tooltips e `aria-labels`, y limpieza de estados muertos.
-- [ ] **T-16:** Verificar `npm run build` (tsc strict) y `npm run lint` en verde; quickstart actualizado en `README.md`.
+- [x] **T-15:** Formateo de montos y fechas con `Intl` (`es-AR`), tooltips e `aria-labels`, y limpieza de estados muertos.
+- [x] **T-16:** Verificar `npm run build` (tsc strict) y `npm run lint` en verde; quickstart actualizado en `README.md`.
