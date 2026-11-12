@@ -26,7 +26,7 @@
 
 ## Fase 4: Tests Unitarios (Pytest)
 
-- [ ] **T-14:** Crear `backend/tests/unit/test_cuit.py`: CUITs válidos de referencia, DV incorrecto, 10 dígitos, letras, formatos con/sin guiones, casos borde dv=0 y dv=10→9.
-- [ ] **T-15:** Crear `backend/tests/unit/test_reglas.py` con un fixture factory `factura(**overrides)` sobre una base válida, cubriendo por regla: caso feliz, caso de rechazo, y **casos borde** (verificación en `04-verification.md` §1).
-- [ ] **T-16:** Crear `backend/tests/unit/test_engine.py`: estado global APROBADO/RECHAZADO, fallos múltiples simultáneos (CU-06), reglas inyectables parciales.
-- [ ] **T-17:** Configurar `pytest-cov` y verificar **100% de cobertura** en `backend/src/domain/` (incluye value_objects y rules); reporte con `--cov-report=term-missing`.
+- [x] **T-14:** Crear `backend/tests/unit/test_cuit.py`: CUITs válidos de referencia, DV incorrecto, 10 dígitos, letras, formatos con/sin guiones, casos borde dv=0 y dv=10→9.
+- [x] **T-15:** Crear `backend/tests/unit/test_reglas.py` con un fixture factory `factura(**overrides)` sobre una base válida, cubriendo por regla: caso feliz, caso de rechazo, y **casos borde** (verificación en `04-verification.md` §1).
+- [x] **T-16:** Crear `backend/tests/unit/test_engine.py`: estado global APROBADO/RECHAZADO, fallos múltiples simultáneos (CU-06), reglas inyectables parciales.
+- [x] **T-17:** Configurar `pytest-cov` y verificar **100% de cobertura** en `backend/src/domain/` (incluye value_objects y rules); reporte con `--cov-report=term-missing`.
