@@ -63,11 +63,17 @@ No aplica en este módulo.
 | 2026-11-12 | `ClockPort` inyectable | R5 depende de "hoy"; inyectarlo elimina mocks de tiempo y flakes. | Tests pasan fecha fija. |
 | 2026-11-12 | Reloj de sistema en `America/Argentina/Buenos_Aires` | Confirmado por el product owner: la vigencia (R5) debe reflejar el día local del operador aunque el server corra en UTC. | `RelojSistema` usa `zoneinfo`; evita corrimientos de ±1 día. |
 | 2026-11-12 | Regla de admisión R0 (remitos) | Confirmado por el product owner: un remito sin importes no admite R3/R4; se rechaza explícitamente en vez de inventar validaciones. | Cortocircuito **antes** de R1–R5; única excepción al "sin cortocircuito" de las 5 reglas. |
+| 2026-11-12 | Dependencia `tzdata` con marcador `sys_platform == "win32"` | `zoneinfo("America/Argentina/Buenos_Aires")` no resuelve en Windows sin el paquete (T-13). Aprobado por Kevin en la sesión. | En Linux/Render no se instala (la base de zonas ya existe en el sistema). |
+| 2026-11-12 | Sintaxis `X \| None` (PEP 604) y `collections.abc.Sequence` en vez de `Optional[X]`/`typing.Sequence` | Reglas `UP` de ruff (target py311); semántica idéntica a DESIGN-01 §2. | Sin impacto de contrato. |
+| 2026-11-12 | `Proveedor` definido en `domain/ports/padron_port.py` (el design lo esbozaba dentro de rules/base.py) | T-03 (puerto + Proveedor) antecede a T-04; evita la dependencia ports→rules. | `rules/base.py` importa `Proveedor` desde el puerto. |
+| 2026-11-12 | `digito_verificador_valido` retorna `False` si el formato es inválido | Guard defensivo: evita `ValueError` con letras/cadenas cortas al llamar el método directamente (matriz fila 5). | `es_valido()` conserva el cortocircuito del pseudocódigo. |
+| 2026-11-12 | `detalles` tipado `dict[str, str]`; mensajes R3/R4 con montos es-AR vía helper `formato_ars` (`$25.000,00`) | Legibilidad para el operador, fiel al ejemplo de mensaje de DESIGN-01 §2. | JSON de MOD-03 no cambia (`detalles` sigue siendo string). |
+| 2026-11-12 | Fixture factory `factura(**overrides)` en `tests/unit/conftest.py` (compartido por test_reglas y test_engine) | T-15 lo pedía dentro de test_reglas.py; el conftest evita duplicarlo en T-16. | Sin impacto en código de producción. |
 
 ## 5. Criterio de Aceptación Final (Definition of Done)
 
-- [ ] Todas las tareas de `03-tasks.md` están marcadas como `[x]`.
-- [ ] Todos los tests de Pytest pasan en verde.
-- [ ] Cobertura de `backend/src/domain/` = **100%**.
-- [ ] La matriz de casos borde (§1) está cubierta fila por fila.
-- [ ] Ningún archivo de `domain/` importa `fastapi`, `sqlite3`, `pypdf` ni SDKs de LLM (verificación por grep/lint).
+- [x] Todas las tareas de `03-tasks.md` están marcadas como `[x]`.
+- [x] Todos los tests de Pytest pasan en verde (50 passed, 2026-11-12).
+- [x] Cobertura de `backend/src/domain/` = **100%** (`--cov-fail-under=100` en verde).
+- [x] La matriz de casos borde (§1) está cubierta fila por fila (filas 1–24).
+- [x] Ningún archivo de `domain/` importa `fastapi`, `sqlite3`, `pypdf` ni SDKs de LLM (verificación por grep: sin coincidencias).

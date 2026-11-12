@@ -6,9 +6,9 @@
 
 ## Estado actual (resumen rápido)
 
-- **Fase del proyecto:** Implementación iniciada — **MOD-00 completo** (esqueleto monorepo + calidad base en verde).
-- **Siguiente acción concreta:** `MOD-01` Fase 1 → dominio puro (modelos, VOs CUIT/Monto con `Decimal`) según `specs/modules/01-motor-reglas/`.
-- **Módulos:** 00 🟢 Completado · 01 ⚪ Pendiente · 02 ⚪ Pendiente · 03 ⚪ Pendiente · 04 ⚪ Pendiente · 05 ⚪ Pendiente.
+- **Fase del proyecto:** Implementación iniciada — **MOD-00 y MOD-01 completos** (dominio + motor de reglas R0–R5 en verde con 100% de cobertura).
+- **Siguiente acción concreta:** `MOD-02` Fase 1 → ingesta PDF y extracción IA según `specs/modules/02-extraccion-ia/`.
+- **Módulos:** 00 🟢 Completado · 01 🟢 Completado · 02 ⚪ Pendiente · 03 ⚪ Pendiente · 04 ⚪ Pendiente · 05 ⚪ Pendiente.
 - **Bloqueos:** ninguno.
 - **Configuración del usuario (Kevin):** autonomía completa (tests, deps, archivos, commit local, LLM real, push/deploy) · verificación completa obligatoria · desvío menor → ADR y seguir; desvío de contrato/esquema/regla → preguntar · commits por fase.
 - **Protocolo de sesión (misión implícita en AGENTS.md §3):** Kevin escribe una palabra y el agente ya sabe qué hacer — `arrancá` = módulo pendiente completo (anuncia y ejecuta, sin esperar confirmación) · `MOD-XX` / `MOD-XX Fase N` = override · `prueba` = solo próxima fase · `estado` = resumen · `todo` = continuo hasta el final · `DoD` = revisión final. Al cerrar un módulo: bitácora + estado 🟢 en specs/README.md + **esperar al usuario** (no continuar al siguiente módulo por su cuenta).
@@ -101,3 +101,38 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM (solo se verificó el reflejo del modo vía `/health` con un `.env` temporal).
+
+### [2026-11-12] Sesión 2 — MOD-01 completo (Dominio y Motor de Reglas)
+
+**Qué se hizo:**
+- Fase 1 (T-01..T-04): `domain/models.py` (ItemFactura, FacturaExtraida, ReglaResultado, ResultadoAuditoria.desde_reglas), VO `CUIT` (módulo 11, dv=11→0 / dv=10→9), puertos `PadronProveedoresPort` + `ClockPort`, `ContextoAuditoria` + `Protocol Regla` + helper `formato_ars`.
+- Fase 2 (T-05..T-10): reglas R1–R5 con códigos de error exactos y mensajes es-AR; `engine.py` con admisión R0 (REMITO corta antes de R1–R5), evaluación completa sin cortocircuito y reglas inyectables.
+- Fase 3 (T-11..T-13): `backend/data/proveedores.json` (3 activos + 1 inactivo), `JsonPadronProveedores` (cache, normalización de guiones, warning si falta el archivo), `RelojSistema` (zoneinfo `America/Argentina/Buenos_Aires`).
+- Fase 4 (T-14..T-17): `test_cuit.py` (24 casos), `test_reglas.py` (matriz de borde R1–R5), `test_engine.py` (CU-01/02/06/07, filas 22–24, inyectables, rendimiento <10 ms con 20 ítems), conftest con factory `factura(**overrides)`. Gate `--cov-fail-under=100` en verde.
+
+**Verificación ejecutada (evidencia real):**
+- `pytest backend/tests/unit -v` → **50 passed** (0.9 s).
+- `pytest tests/unit --cov=src/domain --cov-report=term-missing --cov-fail-under=100` (desde `backend/`) → **Total 100%** (181 stmts, 0 miss) · `Required test coverage of 100% reached`.
+- `ruff check backend` → All checks passed · `ruff format --check backend` → 35 files already formatted.
+- Prueba de humo de adaptadores: padrón resuelve activo/inactivo/ausente y `RelojSistema().hoy()` = 2026-11-12 (-03:00).
+- Grep de pureza: `domain/` sin imports de `fastapi|sqlite3|pypdf|openai|anthropic`.
+
+**Archivos creados/modificados clave:**
+- `backend/src/domain/`: `models.py`, `value_objects/cuit.py`, `ports/{padron_port,clock_port}.py`, `rules/base.py`, `rules/r1..r5_*.py`, `rules/engine.py`.
+- `backend/src/infrastructure/`: `padron/json_padron.py`, `clock.py`; `backend/data/proveedores.json`.
+- `backend/tests/unit/`: `conftest.py`, `test_cuit.py`, `test_reglas.py`, `test_engine.py`.
+- `backend/requirements.txt`: `tzdata>=2024.1 ; sys_platform == "win32"`; `.gitignore`: artefactos de coverage.
+
+**Decisiones / ADRs nuevos (si los hay):**
+- `tzdata` añadida con marcador win32 — **aprobado por Kevin** vía pregunta (zoneinfo no resuelve en Windows sin el paquete).
+- 6 ADRs menores en `04-verification.md` §4: sintaxis `X | None`/`Sequence` (reglas UP de ruff), `Proveedor` en `ports/padron_port.py`, guard defensivo del DV, `detalles` tipado + `formato_ars` es-AR, factory en conftest. Ninguno cambia contratos de API, esquema de BD ni reglas de negocio.
+
+**Estado exacto al cerrar:**
+- MOD-01 **🟢 Completado** (T-01..T-17 ✓; matriz de 24 filas cubierta; DoD §5 íntegro). MOD-02..MOD-05 ⚪ Pendientes.
+
+**Próximos pasos para la próxima sesión:**
+1. `arrancá` → **MOD-02** (ingesta PDF + extracción IA): leer los 4 docs de `specs/modules/02-extraccion-ia/`; depende del dominio de este módulo (`FacturaExtraida`) y de `EXTRACTOR_MODE=mock` por default.
+2. Ojo con límites ya implementados: PDF ≤ 5 MB, ≤ 10 páginas, `PDF_SIN_TEXTO` → 422, campos críticos faltantes → `EXTRACCION_FALLIDA` (502).
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM en esta sesión (todo el módulo es Python puro; el extractor IA recién entra en MOD-02).
