@@ -19,12 +19,12 @@
 
 ## Fase 2: Aplicación y Presentación
 
-- [ ] **T-05:** Implementar `AuditarComprobanteUseCase` en `backend/src/application/auditar_comprobante.py` con inyección de puertos (pdf, extractor, padrón, clock, repositorio) siguiendo el flujo de `02-design.md` §1; medir `tiempo_ejecucion_ms` end-to-end **más el desglose por etapa** (`latencia_extraccion_ms`, `latencia_reglas_ms`) con `time.perf_counter()`; ante error de extracción, persistir `estado="ERROR_EXTRACCION"` y propagar el error tipado.
-- [ ] **T-06:** Definir DTOs de `backend/src/presentation/dtos.py` (incluye serialización de montos con 2 decimales).
-- [ ] **T-07:** Exponer `POST /api/v1/auditar` en `backend/src/presentation/routers/auditar.py`: validaciones de tamaño (`413`) y MIME/parseo (`422`) antes del caso de uso; respuesta `200` con `ResultadoAuditoriaDTO` (RN-3-02).
-- [ ] **T-08:** Exponer `GET /api/v1/ejemplos` y `GET /api/v1/ejemplos/{id}/pdf` en `backend/src/presentation/routers/ejemplos.py` (catálogo estático leído de `data/ejemplos/`; `StreamingResponse` para el PDF).
-- [ ] **T-09:** Exponer `GET /api/v1/historial` (limit/offset, default 20/0, orden `creado_en DESC`, sin `json_crudo_ia`) y `GET /api/v1/historial/{id}` (completo) en `backend/src/presentation/routers/historial.py`.
-- [ ] **T-10:** Implementar `backend/src/presentation/errores.py`: mapeo de excepciones de dominio/infra (`PDF_INVALIDO`, `PDF_SIN_TEXTO`, `PdfDemasiadasPaginasError` → `PDF_INVALIDO` con mensaje de límite de páginas, `EXTRACCION_FALLIDA`, etc.) a `HTTPException` con el cuerpo de error tipado §3; registrar los handlers en la app.
+- [x] **T-05:** Implementar `AuditarComprobanteUseCase` en `backend/src/application/auditar_comprobante.py` con inyección de puertos (pdf, extractor, padrón, clock, repositorio) siguiendo el flujo de `02-design.md` §1; medir `tiempo_ejecucion_ms` end-to-end **más el desglose por etapa** (`latencia_extraccion_ms`, `latencia_reglas_ms`) con `time.perf_counter()`; ante error de extracción, persistir `estado="ERROR_EXTRACCION"` y propagar el error tipado.
+- [x] **T-06:** Definir DTOs de `backend/src/presentation/dtos.py` (incluye serialización de montos con 2 decimales).
+- [x] **T-07:** Exponer `POST /api/v1/auditar` en `backend/src/presentation/routers/auditar.py`: validaciones de tamaño (`413`) y MIME/parseo (`422`) antes del caso de uso; respuesta `200` con `ResultadoAuditoriaDTO` (RN-3-02).
+- [x] **T-08:** Exponer `GET /api/v1/ejemplos` y `GET /api/v1/ejemplos/{id}/pdf` en `backend/src/presentation/routers/ejemplos.py` (catálogo estático leído de `data/ejemplos/`; `StreamingResponse` para el PDF).
+- [x] **T-09:** Exponer `GET /api/v1/historial` (limit/offset, default 20/0, orden `creado_en DESC`, sin `json_crudo_ia`) y `GET /api/v1/historial/{id}` (completo) en `backend/src/presentation/routers/historial.py`.
+- [x] **T-10:** Implementar `backend/src/presentation/errores.py`: mapeo de excepciones de dominio/infra (`PDF_INVALIDO`, `PDF_SIN_TEXTO`, `PdfDemasiadasPaginasError` → `PDF_INVALIDO` con mensaje de límite de páginas, `EXTRACCION_FALLIDA`, etc.) a `HTTPException` con el cuerpo de error tipado §3; registrar los handlers en la app.
 
 ## Fase 3: Integración y Tests
 

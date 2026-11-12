@@ -96,12 +96,9 @@ class SqliteAuditoriaRepository:
             estado=fila["estado_auditoria"],
             cuit_emisor=fila["cuit_emisor"],
             monto_total=None if monto is None else Decimal(str(monto)),
-            datos_extraidos=(
-                None if datos is None else json.loads(datos)
-            ),
+            datos_extraidos=(None if datos is None else json.loads(datos)),
             reglas_evaluadas=[
-                ReglaResultado.model_validate(item)
-                for item in json.loads(fila["reglas_evaluadas"])
+                ReglaResultado.model_validate(item) for item in json.loads(fila["reglas_evaluadas"])
             ],
             json_crudo_ia=None if crudo is None else json.loads(crudo),
             tiempo_ejecucion_ms=fila["tiempo_ejecucion_ms"],
