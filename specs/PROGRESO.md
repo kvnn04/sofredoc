@@ -6,10 +6,10 @@
 
 ## Estado actual (resumen rápido)
 
-- **Fase del proyecto:** Implementación iniciada — **MOD-00 y MOD-01 completos** (dominio + motor de reglas R0–R5 en verde con 100% de cobertura).
-- **Siguiente acción concreta:** `MOD-02` Fase 1 → ingesta PDF y extracción IA según `specs/modules/02-extraccion-ia/`.
-- **Módulos:** 00 🟢 Completado · 01 🟢 Completado · 02 ⚪ Pendiente · 03 ⚪ Pendiente · 04 ⚪ Pendiente · 05 ⚪ Pendiente.
-- **Bloqueos:** ninguno.
+- **Fase del proyecto:** Implementación iniciada — **MOD-00, MOD-01 y MOD-02 completos** (dominio + motor de reglas + ingesta PDF/extracción IA, todo en verde con gates de cobertura al 100%).
+- **Siguiente acción concreta:** `MOD-03` Fase 1 → API REST y SQLite según `specs/modules/03-api-sqlite/`.
+- **Módulos:** 00 🟢 Completado · 01 🟢 Completado · 02 🟢 Completado · 03 ⚪ Pendiente · 04 ⚪ Pendiente · 05 ⚪ Pendiente.
+- **Bloqueos:** ninguno. *Nota: la verificación manual de MOD-02 con `EXTRACTOR_MODE=llm` (3 PDFs de ejemplo) queda para la sesión de MOD-03, porque los PDFs se generan ahí (T-04).*
 - **Configuración del usuario (Kevin):** autonomía completa (tests, deps, archivos, commit local, LLM real, push/deploy) · verificación completa obligatoria · desvío menor → ADR y seguir; desvío de contrato/esquema/regla → preguntar · commits por fase.
 - **Protocolo de sesión (misión implícita en AGENTS.md §3):** Kevin escribe una palabra y el agente ya sabe qué hacer — `arrancá` = módulo pendiente completo (anuncia y ejecuta, sin esperar confirmación) · `MOD-XX` / `MOD-XX Fase N` = override · `prueba` = solo próxima fase · `estado` = resumen · `todo` = continuo hasta el final · `DoD` = revisión final. Al cerrar un módulo: bitácora + estado 🟢 en specs/README.md + **esperar al usuario** (no continuar al siguiente módulo por su cuenta).
 
@@ -136,3 +136,38 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM en esta sesión (todo el módulo es Python puro; el extractor IA recién entra en MOD-02).
+
+### [2026-11-12] Sesión 3 — MOD-02 completo (Ingesta PDF y Extracción IA)
+
+**Qué se hizo:**
+- Fase 1 (T-01..T-02): puerto `PdfTextPort`; `PypdfTextExtractor` (concatena páginas, guarda defensivos `PdfInvalidoError`/`PdfDemasiadasPaginasError` >10 páginas/`PdfSinTextoError` <20 chars significativos); taxonomía de errores en `domain/errors.py` con atributo `codigo` (ADR-02-02).
+- Fase 2 (T-03..T-05): `DocumentExtractorPort` + `ExtraccionResultado` en `models.py` (reutiliza `FacturaExtraida`); fixtures `extraccion-esperada.json` (CUIT 30-12345678-1, matemática consistente, fecha 2026-11-07 = hoy−5) y `extraccion-rechazado.json` (desvío $1.800 → R3); `MockExtractor` determinista (< 2 ms, ADR-02-06 fecha estática).
+- Fase 3 (T-06..T-09): `client.py` (SDK openai con import perezoso, `response_format` json_schema strict, `temperature=0`, esquema adaptado vía `preparar_esquema_estricto` — ADR-02-03); `prompt.py` (SYSTEM_PROMPT literal + user truncado a 30.000 chars + refuerzo en reintento); `LLMStructuredExtractor` (intento+1 reintento sobre ValidationError, latencia loggeada, `json_crudo_ia` conservado); `factory.py` (mock/llm + error claro sin key). `openai>=1.40` agregada a requirements.txt e instalada (3.49.0) — **aprobado por Kevin**.
+- Fase 4 (T-10..T-13): `backend/tests/unit/test_extractor.py` — 33 tests: pypdf (texto, límite 10/11 páginas, corrupto, cifrado, guards), mock (determinismo, variantes contra esquema, desvío > $1.00, < 10 ms), LLM falsificado (ok, reintento, falla definitiva, error proveedor sin reintento), client (strict, sin key, SDK ausente, error proveedor, no-JSON), esquema strict (claves no soportadas fuera, objetos cerrados, enum/format/null), factory (default mock, variante, llm±key).
+
+**Verificación ejecutada (evidencia real):**
+- `pytest tests/unit/test_extractor.py -v --cov=src/infrastructure/pdf --cov=src/infrastructure/llm --cov-fail-under=90` → **33 passed, cobertura 100%** (155 stmts, 0 miss).
+- `pytest tests/unit -q` → **84 passed** (1.49 s, todo offline con SDK falsificado).
+- `pytest tests/unit --cov=src/domain --cov-fail-under=100` → **100%** (gate de MOD-01 intacto).
+- `ruff check backend` → All checks passed · `ruff format --check backend` → 45 files already formatted.
+- Smokes manuales: PDF mínimo generado en memoria (texto extraído + `PDF_SIN_TEXTO` con código correcto), mock en 1.74 ms con `json_crudo_ia` poblado, flujo completo LLM-falso (esquema strict, temperature=0, reintento con prompt reforzado, `EXTRACCION_FALLIDA` tras 2 intentos).
+
+**Archivos creados/modificados clave:**
+- `backend/src/domain/`: `errors.py`, `ports/pdf_text_port.py`, `ports/document_extractor_port.py`, `models.py` (+`ExtraccionResultado`).
+- `backend/src/infrastructure/pdf/`: `pypdf_adapter.py`. `backend/src/infrastructure/llm/`: `client.py`, `prompt.py`, `structured_extractor.py`, `mock_extractor.py`, `factory.py`.
+- `backend/data/fixtures/`: `extraccion-esperada.json`, `extraccion-rechazado.json`.
+- `backend/tests/unit/test_extractor.py`; `backend/requirements.txt` (+`openai>=1.40`); `backend/src/config.py` (+`mock_variant`) y `.env.example` (+`MOCK_VARIANT`).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- 7 ADRs en `04-verification.md` §4 (ADR-02-01..07): `openai` en requirements (aprobado por Kevin), errores en `domain/errors.py`, transformación del esquema al modo strict, fallo de proveedor sin reintento, `MOCK_VARIANT` en config, fixture mock con fecha estática (riesgo de vencimiento ≈ 2027-01-06 → regenerar), import perezoso del SDK + umbral de caracteres significativos sin espacios. Ninguno cambia contrato API, esquema de BD ni reglas de negocio.
+
+**Estado exacto al cerrar:**
+- MOD-02 **🟢 Completado** (T-01..T-13 ✓; DoD §5: 4/5 en verde, 1 pendiente por diseño — verificación con `EXTRACTOR_MODE=llm` sobre los 3 PDFs de ejemplo que genera MOD-03 T-04). MOD-03..MOD-05 ⚪ Pendientes.
+
+**Próximos pasos para la próxima sesión:**
+1. `arrancá` → **MOD-03** (API REST + SQLite): leer los 4 docs de `specs/modules/03-api-sqlite/`; Fase 1 arranca con `AuditoriaRepositoryPort` + DDL.
+2. En esa sesión, tras generar los PDFs de ejemplo (T-04), ejecutar la verificación manual pendiente de MOD-02 §2 con `EXTRACTOR_MODE=llm` (registrar costo en bitácora).
+3. Cablear `crear_extractor()` y `PypdfTextExtractor` en `main.py`/use case (T-11 de MOD-03).
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM en esta sesión (todo probado con SDK falsificado; el modo `llm` recién se ejercita al tener los PDFs de ejemplo en MOD-03).
