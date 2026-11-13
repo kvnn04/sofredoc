@@ -7,7 +7,8 @@
 ## Estado actual (resumen rápido)
 
 - **Fase del proyecto:** MOD-00..MOD-05 en lo esencial: MOD-00..MOD-04 completos (MOD-04 con DoD 5/5 tras automatizar su checklist en el E2E) + **MOD-05 QA completo (T-01..T-13)**: gate de cobertura, E2E Playwright (5 escenarios × 2 pasadas verdes, incluye subida propia y errores CU-05), k6 a 50 VUs en verde, workflow CI, README+capturas. Falta el **deploy de cierre (T-14..T-16)**.
-- **Siguiente acción concreta:** deploy Render + Vercel siguiendo `docs/despliegue.md` (15–20 min, requiere cuentas/orden de Kevin) → luego DoD global (`DoD`).
+- **Git:** ramas unificadas el 13/11 — `main` (ex-`master` renombrada, con merge fast-forward de `pruebaFront`) contiene todo el historial (MOD-00..MOD-05 Fase 4-bis, hasta `6db502d`); `remote origin` = https://github.com/kvnn04/sofredoc.git (orden de push explícita de Kevin; **la ejecución del push la hace Kevin**). `pruebaFront` queda apuntando al mismo commit (borrable).
+- **Siguiente acción concreta:** (1) push de `main` a GitHub (lo ejecuta Kevin; el CI `.github/workflows/verificacion.yml` corre solo al pushear) → (2) deploy Render + Vercel siguiendo `docs/despliegue.md` (15–20 min) → (3) DoD global (`DoD`).
 - **Módulos:** 00 🟢 · 01 🟢 · 02 🟢 · 03 🟢 · 04 🟢 · 05 🟡 (QA 100%, deploy pendiente).
 - **Bloqueos:** deploy = plataformas de Kevin (repo en GitHub + Render + Vercel). *Pendientes con LLM real (sesiones anteriores): verificación de MOD-02 §2 y del ejemplo R4 de la UI con `EXTRACTOR_MODE=llm` — falta `backend/.env` con `LLM_API_KEY`.*
 - **Configuración del usuario (Kevin):** autonomía completa (tests, deps, archivos, commit local, LLM real, push/deploy) · verificación completa obligatoria · desvío menor → ADR y seguir; desvío de contrato/esquema/regla → preguntar · commits por fase.
