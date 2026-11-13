@@ -420,3 +420,29 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM (verificación en modo mock, RN-5-01).
+
+### [2026-11-13] Sesión 11 — Fix CI: instalación de k6 con suite apt `stable` (error en el primer run de GitHub Actions)
+
+**Qué se hizo:**
+- Kevin reporta el error del CI: `Err:8 https://dl.k6.io/deb ubuntu Release — 404 Not Found` en el step "Instalar k6" de `verificacion.yml` (runner ubuntu-latest = Ubuntu 26.04 "resolute").
+- Diagnóstico: el workflow usaba la instrucción apt **vieja** de k6 (`... https://dl.k6.io/deb ubuntu main`); el repo de k6 ya no publica `dists/ubuntu` — hoy publica el suite **`stable`** (docs vigentes de Grafana, verificados vía HTTP: `https://dl.k6.io/deb/dists/stable/Release` con `Suite: stable`, `Components: main`, amd64). Nunca había corrido ese step: era el primer run de CI.
+- Fix: `ubuntu main` → `stable main` en `k6.list` + `curl -fsSL` (como en los docs) + comentario explicativo en el workflow.
+
+**Verificación ejecutada (evidencia real):**
+- `GET https://dl.k6.io/deb/dists/stable/Release` → 200, Release file válida (`Suite: stable`, architectures amd64/i386).
+- Re-run del CI por Kevin tras push (verificar que el job quede en verde completo: pytest → ruff → build → E2E → k6 smoke → k6 funcional).
+
+**Archivos creados/modificados clave:**
+- `.github/workflows/verificacion.yml` (step "Instalar k6"), `specs/PROGRESO.md` (esta entrada).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- Ninguno: fix de tooling de CI (sin cambios de contrato API/esquema/reglas).
+
+**Estado exacto al cerrar:**
+- `main` en `71a8f90` + este fix commiteado localmente; pendiente push de Kevin y re-run del CI. Módulos 00–04 🟢 · 05 🟡 (falta deploy T-14..T-16).
+
+**Próximos pasos para la próxima sesión:**
+1. Push de `main` → CI en verde → deploy de cierre (T-14..T-16) con `docs/despliegue.md` → `DoD`.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM.

@@ -63,10 +63,12 @@ jobs:
 
       # ------------------------------------------------------------------- k6
       # RN-5-01: carga EXCLUSIVAMENTE con EXTRACTOR_MODE=mock (smoke de 10 VUs).
+      # Suite `stable` (docs vigentes de Grafana): el repo de k6 ya no publica
+      # `dists/ubuntu` (404 en apt update con la instrucción vieja).
       - name: Instalar k6
         run: |
-          curl -s https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb ubuntu main" | sudo tee /etc/apt/sources.list.d/k6.list
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
           sudo apt-get update -q && sudo apt-get install -qy k6
       - name: Levantar backend mock (BD efímera)
         working-directory: backend
