@@ -8,9 +8,11 @@ SYSTEM_PROMPT = (
     "Sos un extractor de datos de comprobantes comerciales argentinos. "
     "Devolvés EXCLUSIVAMENTE un JSON conforme al esquema provisto. "
     "Copiás los valores literales del texto sin corregir, calcular ni redondear. "
-    "Los montos van como números con punto decimal. La fecha va YYYY-MM-DD. "
-    "Si un campo no aparece en el texto, null, salvo items, fecha_emision, "
-    "cuit_emisor, razon_social, monto_total y tipo_comprobante, que son obligatorios."
+    "Los montos van SIEMPRE como números JSON con punto decimal, sin símbolo $, "
+    "sin separadores de miles y sin texto: 384000.00, nunca '$200.000,00'. "
+    "La fecha va YYYY-MM-DD. Si un campo no aparece en el texto, null; impuestos "
+    "faltante es 0; salvo items, fecha_emision, cuit_emisor, razon_social, "
+    "monto_total y tipo_comprobante, que son obligatorios."
 )
 
 _CARACTERES_MAXIMOS = 30_000  # DESIGN-02 §5: texto truncado a ~30.000 caracteres
@@ -33,9 +35,10 @@ def build_user_prompt(texto_pdf: str, nombre_archivo: str, intento: int = 1) -> 
         cuerpo += (
             f"\n\nATENCIÓN (reintento {intento}): la respuesta anterior no validó contra "
             f"el esquema. Los campos {_CAMPOS_OBLIGATORIOS} son OBLIGATORIOS. Solo "
-            "numero_comprobante, numero_orden_compra e impuestos admiten null. items "
-            "necesita al menos un elemento con descripcion, cantidad, precio_unitario "
-            "y subtotal. Si el texto no trae un dato, usá el valor literal más cercano "
-            "del documento, nunca lo inventes."
+            "numero_comprobante, numero_orden_compra e impuestos admiten null (impuestos "
+            "falso = 0). Todos los montos son NÚMEROS con punto decimal, sin '$' ni "
+            "separadores de miles. items necesita al menos un elemento con descripcion, "
+            "cantidad, precio_unitario y subtotal. Si el texto no trae un dato, usá el "
+            "valor literal más cercano del documento, nunca lo inventes."
         )
     return cuerpo

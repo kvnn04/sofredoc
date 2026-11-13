@@ -10,7 +10,7 @@
 - **Git:** ramas unificadas el 13/11 — `main` (ex-`master` renombrada, con merge fast-forward de `pruebaFront`) contiene todo el historial (MOD-00..MOD-05 Fase 4-bis, hasta `6db502d`); `remote origin` = https://github.com/kvnn04/sofredoc.git (orden de push explícita de Kevin; **la ejecución del push la hace Kevin**). `pruebaFront` queda apuntando al mismo commit (borrable).
 - **Siguiente acción concreta:** (1) push de `main` a GitHub (lo ejecuta Kevin; el CI `.github/workflows/verificacion.yml` corre solo al pushear) → (2) deploy Render + Vercel siguiendo `docs/despliegue.md` (15–20 min) → (3) DoD global (`DoD`).
 - **Módulos:** 00 🟢 · 01 🟢 · 02 🟢 · 03 🟢 · 04 🟢 · 05 🟡 (QA 100%, deploy pendiente).
-- **Bloqueos:** deploy = plataformas de Kevin (repo en GitHub + Render + Vercel). *Pendientes con LLM real (sesiones anteriores): verificación de MOD-02 §2 y del ejemplo R4 de la UI con `EXTRACTOR_MODE=llm` — falta `backend/.env` con `LLM_API_KEY`.*
+- **Bloqueos:** deploy = plataformas de Kevin (repo en GitHub + Render + Vercel). *Verificación con LLM real completada (2026-11-13): matriz de verdad en verde (APROBADO / R3 / R4) y `PDF_SIN_TEXTO` sin créditos — requiere ADR-02-08 (fix Decimal del esquema strict) y ADR-02-09 (p95 > 8 s por outliers del proveedor). Falta solo la pasada visual de la UI con `EXTRACTOR_MODE=llm` (Kevin).*
 - **Configuración del usuario (Kevin):** autonomía completa (tests, deps, archivos, commit local, LLM real, push/deploy) · verificación completa obligatoria · desvío menor → ADR y seguir; desvío de contrato/esquema/regla → preguntar · commits por fase.
 - **Protocolo de sesión (misión implícita en AGENTS.md §3):** Kevin escribe una palabra y el agente ya sabe qué hacer — `arrancá` = módulo pendiente completo (anuncia y ejecuta, sin esperar confirmación) · `MOD-XX` / `MOD-XX Fase N` = override · `prueba` = solo próxima fase · `estado` = resumen · `todo` = continuo hasta el final · `DoD` = revisión final. Al cerrar un módulo: bitácora + estado 🟢 en specs/README.md + **esperar al usuario** (no continuar al siguiente módulo por su cuenta).
 
@@ -284,3 +284,41 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM (todo el QA corre en modo mock, RN-5-01; el modo `llm` sigue pendiente de la key).
+
+### [2026-11-13] Sesión 7 — Escenario real con LLM: `.env` a `llm`, fix de Decimal y matriz de verdad en verde
+
+**Qué se hizo:**
+- `backend/.env` (no versionado): `EXTRACTOR_MODE=mock → llm`. Kevin solo había agregado `LLM_API_KEY` (nombre correcto); faltaba ese cambio.
+- Levantado full-stack en escenario real: backend `:8000` (venv, uvicorn) + frontend `:5173` (`npm.cmd run dev` — `npm` puro falla por ExecutionPolicy de PowerShell).
+- **Bug encontrado en escenario real (ADR-02-08):** con LLM verdadero, el esquema strict admitía la rama string del `anyOf` que Pydantic genera para `Decimal` → el modelo devolvía montos es-AR (`'$200.000,00'`) → `ValidationError` en los 2 intentos → `502 EXTRACCION_FALLIDA` en los 3 ejemplos (el mock nunca lo mostraba porque devuelve números limpios).
+  - Fix infraestructura: `preparar_esquema_estricto` colapsa `anyOf [{number},{string}]` a `{"type": "number"}` (opcional `string|null` intacto).
+  - Refuerzo de prompt: montos siempre números JSON sin `$` ni separadores de miles; impuestos faltante = 0 (intento 1 y reintento).
+  - Test de factory hecho determinista: `monkeypatch.setenv("EXTRACTOR_MODE","mock")` + `get_settings.cache_clear()` (antes dependía de que NO existiera `.env`; con el `.env` real en `llm` el test se rompía).
+- Verificación real completada (MOD-02 §2, checkboxes y ADR-02-08/09 en `04-verification.md`): matriz de verdad `ej-factura-aprobada → APROBADO` / `ej-factura-desvio → RECHAZADO R3` / `ej-monto-alto-sin-oc → RECHAZADO R4`, 100% de campos extraídos correctos; PDF solo-gráficos (reportlab) → `422 PDF_SIN_TEXTO` sin consumir créditos; 10 extracciones reales: mediana 3.103 ms, outliers 10.4/10.8 s → p95 > umbral 8 s, desvío aceptado en ADR-02-09.
+- Historial SQLite persistiendo auditorías reales (APROBADO/RECHAZADO con latencias ms y `ERROR_EXTRACCION` previos al fix por diseño).
+
+**Verificación ejecutada (evidencia real):**
+- `pytest tests -q --cov=src --cov-fail-under=95` → **109 passed**, cobertura total 99.59% (`infrastructure/llm` 100%).
+- `ruff check backend` → All checks passed · `ruff format --check backend` → 57 files already formatted.
+- Real `:8000` `/health` → `{"status":"ok","extractor_mode":"llm"}`; 3 auditorías reales con latencias IA 3.1/3.5/4.1 s (post-fix, primer intento); escaneado → `PDF_SIN_TEXTO` inmediato.
+- Frontend `:5173` → HTTP 200 (proxy `/api/v1` contra el backend en modo `llm`).
+
+**Archivos creados/modificados clave:**
+- `backend/src/infrastructure/llm/client.py` (`_es_anyof_decimal` + colapso en `_limpiar`), `backend/src/infrastructure/llm/prompt.py` (SYSTEM_PROMPT + reintento reforzado), `backend/tests/unit/test_extractor.py` (+2 tests de esquema, factory determinista, import ordenado).
+- Specs: `specs/modules/02-extraccion-ia/04-verification.md` (§2: 3 ítems cerrados; ADR-02-08 y ADR-02-09), `specs/PROGRESO.md` (esta entrada).
+- Sin cambios de contrato API, esquema de BD ni reglas de negocio.
+
+**Decisiones / ADRs nuevos (si los hay):**
+- ADR-02-08 (Decimal → rama numérica en esquema strict, prompt reforzado, factory determinista en tests) y ADR-02-09 (p95 real > 8 s por outliers del proveedor; PoC acepta, umbral era de laboratorio). Ambos menores — sin contrato/esquema/reglas.
+
+**Estado exacto al cerrar:**
+- Módulos 00–04 🟢 · 05 🟡 (QA completo, deploy T-14..T-16 pendiente de plataformas de Kevin). Verificación con LLM real: **completada** (queda solo la pasada visual de la UI con `llm`, a cargo de Kevin — la app ya corre en ese modo).
+- Servidores activos al cerrar: backend `:8000` (llm) + frontend `:5173`.
+
+**Próximos pasos para la próxima sesión:**
+1. (Kevin, 5 min) Pasada visual de la UI en `http://localhost:5173` con modo real: correr los 3 ejemplos (semáforo R3/R4 en rojo), ver JSON crudo, historial y latencias; confirmar ítem 3 de MOD-02 §2.
+2. Deploy de cierre (T-14..T-16) con `docs/despliegue.md`: push a GitHub (lo ejecuta Kevin) → Render Blueprint (variables `EXTRACTOR_MODE=llm`, `LLM_API_KEY`, `CORS_ORIGINS`) → Vercel con `VITE_API_URL` → smoke post-deploy → DoD global (`DoD`).
+3. En Render considerar el p95 real (~10.8 s): no rompe el flujo, pero documentar la latencia esperada del escenario real.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- ~29 llamadas `gpt-4o-mini` (~2k tokens entrada + ~250 salida c/u): 16 en intentos fallidos pre-fix (auditorías que terminaron en 502), 1 de exploración, 12 en verificaciones post-fix (matriz × 2, escaneado no consumió, medición de latencia × 10) — **USD ≈ 0.015 (estimado)**. Ninguna auditoría desde el fix necesitó reintento.

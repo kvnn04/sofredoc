@@ -17,6 +17,7 @@ import pytest
 import src.infrastructure.llm.client as cliente_llm
 import src.infrastructure.llm.structured_extractor as modulo_extractor
 import src.infrastructure.pdf.pypdf_adapter as pypdf_adapter
+from src.config import get_settings
 from src.domain.errors import (
     ExtraccionFallidaError,
     PdfDemasiadasPaginasError,
@@ -426,6 +427,23 @@ class TestEsquemaEstricto:
             assert objeto["additionalProperties"] is False
             assert set(objeto["required"]) == set(objeto["properties"])
 
+    def test_decimal_se_convierte_en_numero_unico(self):
+        # Decimal genera anyOf [{number}, {string}]: en strict el proveedor puede
+        # elegir la rama string y devolver '$200.000,00', que Pydantic rechaza.
+        esquema = cliente_llm.preparar_esquema_estricto(FacturaExtraida.model_json_schema())
+
+        assert esquema["properties"]["monto_total"] == {"type": "number"}
+        assert esquema["properties"]["impuestos"] == {"type": "number"}
+        item = esquema["$defs"]["ItemFactura"]["properties"]
+        assert item["cantidad"] == {"type": "number"}
+        assert item["precio_unitario"] == {"type": "number"}
+        assert item["subtotal"] == {"type": "number"}
+
+    def test_anyof_decimal_acepta_orden_inverso(self):
+        esquema = {"anyOf": [{"type": "string"}, {"type": "number"}]}
+
+        assert cliente_llm.preparar_esquema_estricto(esquema) == {"type": "number"}
+
     def test_conserva_enum_format_y_null_de_opcionales(self):
         esquema = cliente_llm.preparar_esquema_estricto(FacturaExtraida.model_json_schema())
         propiedades = esquema["properties"]
@@ -458,8 +476,15 @@ class TestFactory:
             mock_variant=variante,
         )
 
-    def test_mock_es_el_default_sin_config(self):
-        extractor = crear_extractor()  # sin .env => EXTRACTOR_MODE=mock
+    def test_mock_es_el_default_sin_config(self, monkeypatch):
+        # Determinista aunque el desarrollador tenga backend/.env con llm:
+        # las variables de entorno reales tienen prioridad sobre el archivo.
+        monkeypatch.setenv("EXTRACTOR_MODE", "mock")
+        get_settings.cache_clear()
+        try:
+            extractor = crear_extractor()  # default => EXTRACTOR_MODE=mock
+        finally:
+            get_settings.cache_clear()
 
         assert isinstance(extractor, MockExtractor)
 

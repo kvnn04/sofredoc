@@ -44,8 +44,17 @@ def preparar_esquema_estricto(esquema: dict[str, Any]) -> dict[str, Any]:
       `minimum`...): las restricciones reales las aplica Pydantic (RN-2-03).
     - Marca `additionalProperties: false` y `required` con TODAS las propiedades
       (exigencia del proveedor); los opcionales siguen admitiendo `null` vía anyOf.
+    - Colapsa el `anyOf [{number}, {string}]` que Pydantic genera para `Decimal`
+      a la rama numérica: en strict el proveedor puede elegir la rama string y
+      devolver montos formateados (`'$200.000,00'`) que Pydantic rechaza.
     """
     return _limpiar(esquema)
+
+
+def _es_anyof_decimal(ramas: list[Any]) -> bool:
+    """True si la lista anyOf es el patrón de un `Decimal` de Pydantic."""
+    tipos = [rama.get("type") for rama in ramas if isinstance(rama, dict)]
+    return sorted(tipos) == ["number", "string"]
 
 
 def _limpiar(nodo: Any) -> Any:
@@ -60,7 +69,13 @@ def _limpiar(nodo: Any) -> Any:
         if clave in ("properties", "$defs"):
             resultado[clave] = {nombre: _limpiar(hijo) for nombre, hijo in valor.items()}
         elif clave in ("anyOf", "allOf", "oneOf"):
-            resultado[clave] = [_limpiar(rama) for rama in valor]
+            ramas = [_limpiar(rama) for rama in valor]
+            if clave == "anyOf" and _es_anyof_decimal(ramas):
+                # Decimal → única rama numérica (evita montos como texto es-AR).
+                rama_numero = next(rama for rama in ramas if rama.get("type") == "number")
+                resultado.update(rama_numero)
+            else:
+                resultado[clave] = ramas
         elif clave in ("items",):
             resultado[clave] = _limpiar(valor)
         else:
