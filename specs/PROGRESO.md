@@ -355,3 +355,36 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM en esta sesión (el E2E corre en modo mock, RN-5-01; los escenarios 9–10 interceptan la red a nivel navegador).
+
+### [2026-11-13] Sesión 9 — k6 funcional: correctitud del contrato bajo carga (solicitud de Kevin)
+
+**Qué se hizo:**
+- Kevin pidió además pruebas k6 **funcionales** (no solo saturación); elegido con pregunta: grupos 1+2+3 — contrato de API + matriz de verdad + caminos de error, un solo script con escenarios elegibles por env y smoke corto para CI.
+- `qa/load/funcional.js` (ADR-05-10): 3 escenarios con `check` de contenido — `contrato` (health en modo mock, catálogo con `resultado_esperado`, PDFs con magia `%PDF`, auditoría con id `aud_*` + latencias, historial sin `json_crudo_ia`, detalle con `json_crudo_ia`), `matriz` (3 ejemplos + remito fixture del E2E como fuente única: APROBADO 5 ✅ / solo-R3 / solo-R4 / R0 con 1 regla) y `errores` (422 `PDF_INVALIDO`, 413 `ARCHIVO_MUY_GRANDE`, 404 `AUDITORIA_NO_ENCONTRADA`, 404 `EJEMPLO_NO_ENCONTRADO`).
+- Selección por env: `ESCENARIO=todo|contrato|matriz|errores` (inválido → error claro) y `SMOKE=1` para CI; umbrales `checks` > 99%, `http_req_failed` por escenario y p95 < 500 ms.
+- Ajuste de diseño tras la 1ª corrida: a 14 VUs sin pausa satura el lock de la SQLite (p95 > 500 ms, EXIT=99) → **pausa de 1 s por iteración**: la saturación la mide `stress_test.js` (ADR-05-06), este script mide correctitud bajo concurrencia moderada.
+- CI: stage nuevo en `.github/workflows/verificacion.yml` tras el k6 smoke (`SMOKE=1 k6 run qa/load/funcional.js`, reutiliza el backend mock ya levantado en el job).
+- Docs: `qa/README.md` (árbol, comandos del k6 funcional, tabla de escenarios, umbrales, nota de diseño) + ADR-05-10 en `04-verification.md`.
+
+**Verificación ejecutada (evidencia real):**
+- Backend mock propio en `:8010` con BD efímera `qa/artifacts/k6-funcional.db` (RN-5-05; para no tocar la instancia `llm` de Kevin en `:8000`) — detenido al cerrar.
+- k6 completo (~2 min): **EXIT=0**, 7008 requests, `http_req_failed` **0.00%** en `contrato` y `matriz` (10.5% global = 4xx esperados de `errores`), **p95 337 ms < 500 ms**, todos los checks OK.
+- k6 smoke (`SMOKE=1`, ~30 s): **EXIT=0** · los 3 escenarios individuales (`ESCENARIO=…` + smoke): **EXIT=0** cada uno.
+- `ESCENARIO=inexistente` → mensaje claro de escenarios válidos y **EXIT=107** (fail-fast antes de tocar la API).
+
+**Archivos creados/modificados clave:**
+- `qa/load/funcional.js` (nuevo), `.github/workflows/verificacion.yml` (+stage), `qa/README.md` (sección Funcional), `specs/modules/05-qa-testing/04-verification.md` (ADR-05-10), `specs/PROGRESO.md` (esta entrada).
+- `package.json` + `package-lock.json`: `@types/node` (dev) — resto sin commitear de la Sesión 8 (el spec E2E usa `node:fs`/`node:path`/`process`/`Buffer`).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- ADR-05-10: k6 funcional separado del test de saturación; fixture remito reutilizada del E2E (fuente única); threshold `http_req_failed` por escenario (los 4xx de `errores` son esperados); pausa 1 s por iteración. Menor: herramienta de QA, sin cambios de contrato API/esquema/reglas.
+
+**Estado exacto al cerrar:**
+- Módulos 00–04 🟢 · 05 🟡 (QA completo: E2E 10/10 + k6 saturación + k6 funcional; deploy T-14..T-16 pendiente de plataformas de Kevin). Rama `sumarTestPlaywrite` (4 commits delante de `main`; push lo ejecuta Kevin).
+
+**Próximos pasos para la próxima sesión:**
+1. Deploy de cierre (T-14..T-16) con `docs/despliegue.md`: push de las ramas a GitHub (lo ejecuta Kevin; el CI corre el nuevo stage de k6 funcional) → Render Blueprint → Vercel (`VITE_API_URL`, `CORS_ORIGINS`) → smoke post-deploy → DoD global.
+2. En Render, decidir `EXTRACTOR_MODE` de producción (llm real vs mock de demo) y registrar la key como variable de entorno de la plataforma (nunca en el repo).
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM (k6 y E2E corren en modo mock, RN-5-01).

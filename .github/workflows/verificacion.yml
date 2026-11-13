@@ -76,3 +76,7 @@ jobs:
           curl --retry 15 --retry-connrefused --retry-delay 1 -sf http://localhost:8000/api/v1/health > /dev/null
       - name: k6 smoke (10 VUs × 30 s)
         run: SMOKE=1 k6 run qa/load/stress_test.js
+      # Contrato funcional bajo carga (ADR-05-10): checks de contenido > 99% y
+      # p95 < 500 ms contra el MISMO backend mock ya levantado arriba.
+      - name: k6 funcional (contrato + matriz + errores, smoke)
+        run: SMOKE=1 k6 run qa/load/funcional.js

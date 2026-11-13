@@ -12,7 +12,8 @@ qa/
 │   ├── reset-db.mjs        # borra la BD efímera antes de cada corrida
 │   └── (artefactos en qa/artifacts/, gitignored)
 └── load/
-    └── stress_test.js      # k6: rampa a 50 VUs + meseta + drenaje
+    ├── stress_test.js      # k6: rampa a 50 VUs + meseta + drenaje (saturación)
+    └── funcional.js        # k6: contrato + matriz de verdad + errores bajo carga
 ```
 
 ## Prerrequisitos (una vez)
@@ -80,18 +81,56 @@ Notas:
 
 ## Carga — k6 (RN-5-01: exclusivamente `EXTRACTOR_MODE=mock`)
 
+Dos scripts complementarios (ADR-05-10): `stress_test.js` mide **saturación**
+(techo de concurrencia) y `funcional.js` mide **correctitud del contrato** bajo
+carga moderada (los 200 tienen que devolver el contenido correcto, no solo un
+status OK).
+
 ```powershell
 # Terminal 1 — backend mock con BD efímera (desde backend/)
 node ../qa/e2e/reset-db.mjs
 $env:DB_PATH="qa/artifacts/k6-sofredoc.db"
 .\.venv\Scripts\python.exe -m uvicorn src.main:app --port 8000
 
-# Terminal 2 — prueba de carga completa (rampa 30 s a 50 VUs, meseta 1 min, drenaje 15 s)
+# Terminal 2 — saturación: rampa 30 s a 50 VUs, meseta 1 min, drenaje 15 s
 k6 run qa/load/stress_test.js
 
-# Smoke para CI (10 VUs × 30 s, mismo script con env SMOKE=1)
+# Smoke de saturación para CI (10 VUs × 30 s, mismo script con env SMOKE=1)
 $env:SMOKE="1" ; k6 run qa/load/stress_test.js ; $env:SMOKE=$null
 ```
+
+### Funcional — `funcional.js` (ADR-05-10)
+
+Valida el **contrato de la API** bajo carga: 3 escenarios en paralelo (~2 min),
+seleccionables con `ESCENARIO` (default `todo`) y modo smoke corto para CI:
+
+```powershell
+# Corrida completa: contrato (10 VUs) + matriz (2 VUs) + errores (2 VUs), ~2 min
+$env:BASE_URL="http://localhost:8000/api/v1" ; k6 run qa/load/funcional.js ; $env:BASE_URL=$null
+
+# Smoke para CI (~30 s, perfiles reducidos)
+$env:SMOKE="1" ; k6 run qa/load/funcional.js ; $env:SMOKE=$null
+
+# Un solo escenario
+$env:ESCENARIO="matriz"  ; k6 run qa/load/funcional.js ; $env:ESCENARIO=$null
+$env:ESCENARIO="errores" ; k6 run qa/load/funcional.js ; $env:ESCENARIO=$null
+```
+
+Qué valida cada escenario (con `check`, no solo status):
+
+| Escenario | Validaciones |
+| :--- | :--- |
+| `contrato` | Los 6 endpoints: health en modo mock, catálogo con `resultado_esperado`, PDFs con magia `%PDF`, auditoría con id `aud_*` + latencias numéricas, historial **sin** `json_crudo_ia`, detalle **con** `json_crudo_ia` |
+| `matriz` | Los 3 ejemplos + el remito fixture del E2E (fuente única, `qa/e2e/fixtures/`): APROBADO con 5 reglas ✅, RECHAZADO solo-R3, solo-R4 y remito con exactamente 1 regla (R0) |
+| `errores` | `.txt` → 422 `PDF_INVALIDO` · blob 5.5 MB → 413 `ARCHIVO_MUY_GRANDE` · historial inexistente → 404 `AUDITORIA_NO_ENCONTRADA` · ejemplo inexistente → 404 `EJEMPLO_NO_ENCONTRADO` |
+
+Umbrales: `checks` > 99% (un 200 con JSON malformado cuenta como fallo) y p95
+< 500 ms. `http_req_failed` se thresholdiza **por escenario** (`{scenario:...}`
+en `contrato` y `matriz`): en `errores` todos los requests son 4xx esperados.
+
+Nota de diseño: **pausa de 1 s por iteración** — carga concurrente moderada que
+no satura el lock de la SQLite compartida (techo ~165 req/s, ADR-05-06). La
+saturación la mide `stress_test.js`; este script mide correctitud.
 
 Umbrales (SLOs de `02-design.md` §3, verificables en `04-verification.md` §3):
 
