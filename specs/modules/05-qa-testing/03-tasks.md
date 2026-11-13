@@ -21,6 +21,7 @@
 - [x] **T-08:** Implementar `qa/load/stress_test.js` con las 3 etapas (rampa 50 VUs, meseta 1 min, drenaje) y los thresholds de `02-design.md` §3.
 - [x] **T-09:** Ejecutar `k6 run qa/load/stress_test.js` contra backend mock y registrar los resultados reales (p50, p95, tasa de error, iteraciones/s) en la tabla de resultados de `04-verification.md`.
 - [x] **T-10:** Smoke de carga ligero opcional para CI: `target: 10 VUs, duration: 30s` (mismo script con `options.vus` sobreescrito por env `SMOKE=1`).
+- [x] **T-10-bis** *(solicitud de Kevin, 2026-11-13)*: k6 funcional `qa/load/funcional.js` — correctitud del contrato bajo carga: escenarios `contrato` / `matriz` / `errores` elegibles con `ESCENARIO` (default `todo`) + `SMOKE=1` para CI; thresholds `checks` > 99%, `http_req_failed` por escenario y p95 < 500 ms. Stage en CI + ADR-05-10.
 
 ## Fase 4: Integración y Cierre
 

@@ -388,3 +388,35 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM (k6 y E2E corren en modo mock, RN-5-01).
+
+### [2026-11-13] Sesión 10 — Refresh de documentación + unificación de ramas (solicitud de Kevin)
+
+**Qué se hizo:**
+- Kevin pidió: (1) toda la documentación actualizada, (2) unir `sumarTestPlaywrite` a `main` con todo funcional, (3) el push lo ejecuta él.
+- Refresh de docs: `README.md` raíz (sección Calidad: E2E 10 escenarios con puertos exclusivos 8010/5175, k6 saturación **y funcional**, tabla de umbrales con datos reales de esta sesión; tabla de variables frontend con `VITE_PROXY_TARGET` y nota del proxy de desarrollo), `specs/README.md` (nota de MOD-05: k6 funcional incluido), `docs/despliegue.md` (prerrequisito con el remote real `kvnn04/sofredoc` + smoke opcional del caso R0 con el remito fixture), `AGENTS.md` §10 (comando del k6 funcional + puertos del E2E).
+- `specs/modules/05-qa-testing/03-tasks.md`: T-10-bis (k6 funcional) registrada y marcada `[x]`.
+- Ya al día de sesiones previas: `qa/README.md` (ADR-05-10), `specs/PROGRESO.md`, `04-verification.md`. Intactos por decisión: `CLAUDE.md` (puntero a AGENTS.md), `frontend/README.md` (boilerplate de Vite), docs históricos (`SofreDoc-Validator-Especificacion.md`, `crear specs.md`).
+- **Unificación:** merge **fast-forward** de `sumarTestPlaywrite` → `main` (k6 funcional + E2E 10 escenarios + fix de puertos + docs). Sin push (lo ejecuta Kevin).
+
+**Verificación ejecutada (evidencia real):**
+- `pytest backend/tests -q --cov=src --cov-fail-under=95` → **110 passed en 8.60 s**; cobertura total **99.59%**, dominio 100% (gate ok).
+- `ruff check backend` → All checks passed · `ruff format --check backend` → 58 files already formatted.
+- `npm run build` (frontend) → **built in 2.37 s**.
+- E2E Playwright → **10/10 passed (1.0 m)**, `retries: 0`.
+- Servidores de Kevin arriba e intactos: backend `:8000` (modo llm) + frontend `:5173`.
+
+**Archivos creados/modificados clave:**
+- `README.md`, `specs/README.md`, `docs/despliegue.md`, `AGENTS.md` (§10), `specs/modules/05-qa-testing/03-tasks.md` (T-10-bis), `specs/PROGRESO.md` (esta entrada).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- Ninguno: solo actualización de documentación y operación de git (merge ff, sin cambios de contrato/esquema/reglas).
+
+**Estado exacto al cerrar:**
+- `main` == `sumarTestPlaywrite` (post-merge, historial lineal), árbol completo en verde. Módulos 00–04 🟢 · 05 🟡 (falta deploy T-14..T-16). Pendiente el push de `main` a GitHub (lo ejecuta Kevin).
+
+**Próximos pasos para la próxima sesión:**
+1. Push de `main` a GitHub (`git push -u origin main`; opcional `git push origin sumarTestPlaywrite` para dejar la rama en el remoto) — el CI `.github/workflows/verificacion.yml` corre con el stage nuevo de k6 funcional.
+2. Deploy de cierre (T-14..T-16) siguiendo `docs/despliegue.md` → marcar T-14..T-16 + DoD §5 → MOD-05 a 🟢 en `specs/README.md` → revisión final global (`DoD`).
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM (verificación en modo mock, RN-5-01).

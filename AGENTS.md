@@ -150,8 +150,9 @@ npm install ; npm run dev      # http://localhost:5173
 
 # Calidad
 pytest backend/tests -v --cov=src --cov-report=term-missing
-npx playwright test qa/e2e/auditoria.spec.ts   # con backend(mock)+frontend arriba
-k6 run qa/load/stress_test.js                  # SOLO con EXTRACTOR_MODE=mock
+npx playwright test qa/e2e/auditoria.spec.ts   # con backend(mock)+frontend arriba (usa puertos propios 8010/5175)
+k6 run qa/load/stress_test.js                  # SOLO con EXTRACTOR_MODE=mock (saturación)
+k6 run qa/load/funcional.js                    # SOLO con EXTRACTOR_MODE=mock (contrato/matriz/errores; SMOKE=1, ESCENARIO=…)
 ```
 
 ## 11. Checklist de cierre de sesión (obligatorio)

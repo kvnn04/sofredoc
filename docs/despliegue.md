@@ -7,10 +7,9 @@
 
 ## 0. Prerrequisitos
 
-1. Repo publicado en GitHub (el repo local no tiene remote todavía):
+1. Repo publicado en GitHub — remote `origin` ya configurado (`https://github.com/kvnn04/sofredoc.git`):
    ```powershell
-   git remote add origin git@github.com:<usuario>/sofredoc-validator.git
-   git push -u origin <rama>
+   git push -u origin main
    ```
 2. Cuentas en [render.com](https://render.com) y [vercel.com](https://vercel.com) (plan free).
 
@@ -63,7 +62,11 @@ curl https://<backend>.onrender.com/api/v1/health
 curl.exe -s -X POST https://<backend>.onrender.com/api/v1/auditar `
   -F "file=@backend/data/ejemplos/factura-aprobada-001.pdf;type=application/pdf"
 
-# 3) UI: abrir https://<dominio>.vercel.app, clic en cada ejemplo y confirmar
+# 3) (opcional) Remito → RECHAZADO por admisión R0 (REMITO_NO_AUDITABLE, 1 sola regla)
+curl.exe -s -X POST https://<backend>.onrender.com/api/v1/auditar `
+  -F "file=@qa/e2e/fixtures/remito-transporte-2026.pdf;type=application/pdf"
+
+# 4) UI: abrir https://<dominio>.vercel.app, clic en cada ejemplo y confirmar
 #    APROBADO / RECHAZADO-R3 / RECHAZADO-R4, JSON inspector e historial.
 ```
 
