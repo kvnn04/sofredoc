@@ -8,6 +8,8 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    # Render sondea esta ruta para marcar el servicio "live" (404 en "/" es lo esperable).
+    healthCheckPath: /api/v1/health
     envVars:
       - key: EXTRACTOR_MODE
         value: mock
