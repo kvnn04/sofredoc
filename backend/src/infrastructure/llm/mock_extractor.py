@@ -22,11 +22,13 @@ VARIANTES: dict[str, str] = {
     "aprobada": "extraccion-esperada.json",
     "rechazado": "extraccion-rechazado.json",  # desvío de monto > $1.00 => R3
     "monto-alto-sin-oc": "extraccion-monto-alto-sin-oc.json",  # > $500.000 sin OC => R4
+    "remito": "extraccion-remito.json",  # tipo REMITO => admisión R0 (REMITO_NO_AUDITABLE)
 }
 
 # (marca en el nombre de archivo, variante de fixture): cubre tanto el id del
 # catálogo (`ej-monto-alto-sin-oc.pdf`) como el nombre original del PDF de
-# ejemplo (`factura-monto-alto-sin-oc.pdf`) re-subido a mano.
+# ejemplo (`factura-monto-alto-sin-oc.pdf`) re-subido a mano, y los archivos
+# cuyo nombre contiene "remito" (E2E: remito → R0).
 MARCAS_EJEMPLOS: tuple[tuple[str, str], ...] = (
     ("ej-factura-aprobada", "aprobada"),
     ("factura-aprobada-001", "aprobada"),
@@ -34,6 +36,7 @@ MARCAS_EJEMPLOS: tuple[tuple[str, str], ...] = (
     ("factura-desvio-monto", "rechazado"),
     ("ej-monto-alto-sin-oc", "monto-alto-sin-oc"),
     ("factura-monto-alto-sin-oc", "monto-alto-sin-oc"),
+    ("remito", "remito"),
 )
 
 

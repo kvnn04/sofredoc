@@ -12,6 +12,14 @@
  * RN-4-04). Para asertar el estado "Auditando…" se amplifica la latencia del
  * POST con `page.route` (el backend real no se toca).
  *
+ * Los escenarios 6–10 (extensión, ADR-05-08) cubren: admisión R0 de un REMITO
+ * con la fixture nueva del MockExtractor (1 sola regla evaluada, sin
+ * cortocircuito), `PDF_SIN_TEXTO` y el tope de 10 páginas validados en el
+ * backend real (PDFs fixture commiteados en `qa/e2e/fixtures/`, generados por
+ * `backend/scripts/generar_fixtures_e2e.py`), la red caída (`ERROR_RED`) y el
+ * `EXTRACCION_FALLIDA` (502 simulado con `page.route` sin tocar el backend):
+ * en ambos el resultado previo se conserva (CU-05).
+ *
  * Con `CAPTURAS=1` cada escenario guarda una captura en `docs/capturas/`
  * (para el README); en CI y corridas normales no escribe nada.
  */
@@ -22,9 +30,16 @@ import { expect, test, type Page } from "@playwright/test";
 const SEMAFORO = "Semáforo de auditoría";
 const CODIGOS_ERROR =
   /ERROR_CUIT_INVALIDO|PROVEEDOR_NO_REGISTRADO|DISCREPANCIA_CONTABLE|FALTA_ORDEN_COMPRA|COMPROBANTE_VENCIDO|REMITO_NO_AUDITABLE/;
+/** Códigos de las reglas R1–R5 (R0 no pertenece al semáforo de reglas de fondo). */
+const CODIGOS_R1_A_R5 =
+  /ERROR_CUIT_INVALIDO|PROVEEDOR_NO_REGISTRADO|DISCREPANCIA_CONTABLE|FALTA_ORDEN_COMPRA|COMPROBANTE_VENCIDO/;
 
 function ejemplo(nombre: string) {
   return `Auditar ejemplo: ${nombre}`;
+}
+
+function fixtureE2E(nombre: string): Buffer {
+  return readFileSync(resolve("qa/e2e/fixtures", nombre));
 }
 
 /** Captura para el README (solo con CAPTURAS=1; RN-5-05: sin artefactos en corridas normales). */
@@ -167,5 +182,115 @@ test.describe.serial("Flujo de auditoría (demo con 3 ejemplos)", () => {
     await expect(page.locator('iframe[src^="blob:"]')).toBeVisible();
 
     await captura(page, "demo-04-subida-propia.png");
+  });
+});
+
+test.describe.serial("Escenarios extendidos (ADR-05-08)", () => {
+  test("6) remito subido → admisión R0: 1 sola regla, sin evaluar R1–R5", async ({ page }) => {
+    await page.goto("/");
+    await page.setInputFiles('input[type="file"]', {
+      name: "remito-transporte-2026.pdf",
+      mimeType: "application/pdf",
+      buffer: fixtureE2E("remito-transporte-2026.pdf"),
+    });
+
+    const semaforo = page.getByRole("region", { name: SEMAFORO });
+    await expect(semaforo.getByText("RECHAZADO", { exact: true })).toBeVisible();
+    await expect(semaforo.getByText("REMITO_NO_AUDITABLE")).toBeVisible();
+    // R0 corta el flujo (RN-08): el semáforo tiene 1 sola fila (la admisión).
+    await expect(semaforo.getByRole("listitem")).toHaveCount(1);
+    await expect(semaforo.getByText("R0")).toBeVisible();
+    await expect(semaforo.getByText("Admisión de comprobante")).toBeVisible();
+    // Ninguna regla de fondo R1–R5 fue evaluada (sin cortocircuito).
+    await expect(semaforo.getByText(CODIGOS_R1_A_R5)).toHaveCount(0);
+
+    await captura(page, "demo-05-remito-r0.png");
+  });
+
+  test("7) PDF sin capa de texto → PDF_SIN_TEXTO (422 del backend) sin perder estado", async ({ page }) => {
+    await page.goto("/");
+    const estadoInicial = page.getByText("Pantalla lista para auditar");
+    await expect(estadoInicial).toBeVisible();
+
+    await page.setInputFiles('input[type="file"]', {
+      name: "pdf-escaneado-grafico.pdf",
+      mimeType: "application/pdf",
+      buffer: fixtureE2E("pdf-escaneado-grafico.pdf"),
+    });
+
+    const banner = page.getByRole("alert");
+    await expect(banner.getByText("PDF_SIN_TEXTO")).toBeVisible();
+    await expect(estadoInicial).toBeVisible(); // CU-05: el error no destruye el estado
+  });
+
+  test("8) PDF de 11 páginas → PDF_INVALIDO validado en el backend (tope 10)", async ({ page }) => {
+    await page.goto("/");
+    const estadoInicial = page.getByText("Pantalla lista para auditar");
+    await expect(estadoInicial).toBeVisible();
+
+    // Client-side pasa (es un PDF chico): la validación de páginas es del servidor.
+    await page.setInputFiles('input[type="file"]', {
+      name: "factura-11-paginas.pdf",
+      mimeType: "application/pdf",
+      buffer: fixtureE2E("factura-11-paginas.pdf"),
+    });
+
+    const banner = page.getByRole("alert");
+    await expect(banner.getByText("PDF_INVALIDO")).toBeVisible();
+    await expect(estadoInicial).toBeVisible();
+  });
+
+  test("9) red caída → ERROR_RED y el resultado previo se conserva (CU-05)", async ({ page }) => {
+    await page.goto("/");
+    const semaforo = page.getByRole("region", { name: SEMAFORO });
+
+    // Arrange: un resultado previo en pantalla (ejemplo aprobado).
+    await page.getByRole("button", { name: ejemplo("Factura Proveedor Homologado #001") }).click();
+    await expect(semaforo.getByText("APROBADO", { exact: true })).toBeVisible();
+
+    // Act: la próxima llamada de auditoría se corta a nivel de red.
+    await page.route("**/api/v1/auditar", (ruta) => ruta.abort());
+    await page.getByRole("button", { name: ejemplo("Factura con desvío de monto") }).click();
+
+    // El banner tipado explica la caída…
+    const banner = page.getByRole("alert");
+    await expect(banner.getByText("ERROR_RED")).toBeVisible();
+    await expect(banner.getByText("No se pudo conectar con el backend")).toBeVisible();
+    // …y CU-05: el resultado previo sigue en pantalla.
+    await expect(semaforo.getByText("APROBADO", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Subir un PDF propio (máximo 5 MB)" })).toBeEnabled();
+  });
+
+  test("10) EXTRACCION_FALLIDA (502 simulado) → banner tipado y resultado previo intacto", async ({ page }) => {
+    await page.goto("/");
+    const semaforo = page.getByRole("region", { name: SEMAFORO });
+
+    // Arrange: un resultado previo en pantalla (ejemplo aprobado).
+    await page.getByRole("button", { name: ejemplo("Factura Proveedor Homologado #001") }).click();
+    await expect(semaforo.getByText("APROBADO", { exact: true })).toBeVisible();
+
+    // Act: el POST responde 502 con el cuerpo de error del contrato (§3).
+    // El fulfill intercepta la llamada: el backend nunca la recibe (0 créditos).
+    await page.route("**/api/v1/auditar", (ruta) =>
+      ruta.fulfill({
+        status: 502,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: {
+            codigo: "EXTRACCION_FALLIDA",
+            mensaje: "La respuesta del LLM no validó contra el esquema tras 2 intentos (simulado).",
+          },
+        }),
+      }),
+    );
+    await page.getByRole("button", { name: ejemplo("Factura con desvío de monto") }).click();
+
+    // El banner muestra el código de error tipado del contrato…
+    const banner = page.getByRole("alert");
+    await expect(banner.getByText("EXTRACCION_FALLIDA")).toBeVisible();
+    await expect(banner.getByText("no validó contra el esquema")).toBeVisible();
+    // …y CU-05: el resultado previo sigue en pantalla.
+    await expect(semaforo.getByText("APROBADO", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Subir un PDF propio (máximo 5 MB)" })).toBeEnabled();
   });
 });

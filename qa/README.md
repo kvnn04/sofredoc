@@ -7,7 +7,8 @@ carga con k6** (`load/`). Los tests unitarios/integración de backend viven en
 ```text
 qa/
 ├── e2e/
-│   ├── auditoria.spec.ts   # 4 escenarios obligatorios del flujo demo (DESIGN-05 §3)
+│   ├── auditoria.spec.ts   # 10 escenarios del flujo (4 obligatorios + 6 extendidos, DESIGN-05 §3)
+│   ├── fixtures/           # PDFs del E2E: remito, escaneado sin texto, 11 páginas (ver abajo)
 │   ├── reset-db.mjs        # borra la BD efímera antes de cada corrida
 │   └── (artefactos en qa/artifacts/, gitignored)
 └── load/
@@ -29,7 +30,7 @@ cd backend ; python -m venv .venv ; .\.venv\Scripts\Activate ; pip install -r re
 
 ```powershell
 # Desde la raíz. Levanta solo los 2 procesos (backend mock + frontend Vite)
-# con `webServer` y corre los 4 escenarios contra la UI real.
+# con `webServer` y corre los 10 escenarios contra la UI real.
 npx playwright test qa/e2e/auditoria.spec.ts
 
 # Reporte HTML de la última corrida
@@ -37,14 +38,30 @@ npx playwright show-report qa/artifacts/playwright-report
 
 # Regenerar las capturas de la demo para el README (docs/capturas/)
 $env:CAPTURAS="1" ; npx playwright test qa/e2e/auditoria.spec.ts ; $env:CAPTURAS=$null
+
+# Regenerar los PDFs fixture del E2E (qa/e2e/fixtures/; commiteados, solo si se edita)
+cd backend ; .\.venv\Scripts\python.exe scripts\generar_fixtures_e2e.py ; cd ..
 ```
 
-Los 4 escenarios (matriz de verdad de MOD-03 en modo mock):
+Los 10 escenarios (matriz de verdad de MOD-03 en modo mock + extensión ADR-05-08):
 
 1. Ejemplo aprobado → badge `APROBADO`, 5 reglas ✅, desglose de latencia, id `aud_*`.
 2. Ejemplo con desvío → badge `RECHAZADO` + `DISCREPANCIA_CONTABLE` (R3).
 3. Ejemplo monto alto sin OC → badge `RECHAZADO` + `FALTA_ORDEN_COMPRA` (R4).
 4. JSON inspector (Pydantic + crudo IA, copiable) + historial ≥ 3 filas con latencias.
+5. Subida propia: `.txt` → `PDF_INVALIDO`, 6 MB → `ARCHIVO_MUY_GRANDE` (client-side, sin
+   perder el empty-state) y flujo completo con un PDF real (blob en el visor + "Auditando…").
+6. **Remito subido** → admisión **R0**: badge `RECHAZADO`, `REMITO_NO_AUDITABLE` y **1 sola
+   regla evaluada** (sin cortocircuito: R1–R5 ni se muestran). Fixture del mock por nombre
+   de archivo (`remito…`) → `extraccion-remito.json`.
+7. **PDF sin capa de texto** (`qa/e2e/fixtures/pdf-escaneado-grafico.pdf`) → banner
+   `PDF_SIN_TEXTO` del backend real (422), sin consumir IA y sin perder el empty-state.
+8. **PDF de 11 páginas** (`qa/e2e/fixtures/factura-11-paginas.pdf`) → banner `PDF_INVALIDO`
+   (422): el tope de 10 páginas se valida en el backend (client-side pasa).
+9. **Red caída** (la llamada se aborta con `page.route`) → banner `ERROR_RED` y el
+   resultado previo sigue en pantalla (CU-05).
+10. **`EXTRACCION_FALLIDA`** (502 simulado con `page.route`, el backend no recibe nada) →
+    banner tipado con el código del contrato y resultado previo intacto (CU-05).
 
 Notas:
 

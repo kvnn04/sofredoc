@@ -13,6 +13,7 @@
 
 - [x] **T-05:** Configurar Playwright en la raíz: `playwright.config.ts` (baseURL `http://localhost:5173`, Chromium, `retries: 0`, reporter HTML) y devDependency `@playwright/test`.
 - [x] **T-06:** Implementar `qa/e2e/auditoria.spec.ts` con los 4 escenarios obligatorios de `02-design.md` §3 (3 ejemplos con sus estados esperados + JSON inspector/historial). *(Requirió ADR-05-01: el mock resuelve la fixture por identidad del ejemplo.)* *(Extensión: escenario 5 con la subida propia de RN-4-03/RN-4-04 y el estado "Auditando…" — cierra el checklist §2 de MOD-04, ADR-04-07/ADR-05-07.)*
+- [x] **T-06-bis (extensión solicitada por Kevin, 2026-11-13):** 5 escenarios E2E nuevos (ADR-05-08): 6) REMITO → admisión R0 (1 sola regla, `REMITO_NO_AUDITABLE`) con fixture nueva del MockExtractor por marca `"remito"`; 7) PDF sin capa de texto → `PDF_SIN_TEXTO` del backend real; 8) PDF de 11 páginas → `PDF_INVALIDO` (tope server-side); 9) red caída → `ERROR_RED` conservando el resultado previo (CU-05); 10) `EXTRACCION_FALLIDA` (502 simulado con `page.route`) → banner tipado y CU-05. PDFs fixture commiteados (`qa/e2e/fixtures/`) + script `backend/scripts/generar_fixtures_e2e.py` + test unitario del routing del mock (110 passed).
 - [x] **T-07:** Correr la suite dos veces consecutivas en verde (verificación anti-flake) y versionar `qa/README.md` con instrucciones de ejecución (backend mock + frontend + `npx playwright test`).
 
 ## Fase 3: Pruebas de Carga con k6

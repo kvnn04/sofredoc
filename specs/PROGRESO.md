@@ -6,7 +6,7 @@
 
 ## Estado actual (resumen rápido)
 
-- **Fase del proyecto:** MOD-00..MOD-05 en lo esencial: MOD-00..MOD-04 completos (MOD-04 con DoD 5/5 tras automatizar su checklist en el E2E) + **MOD-05 QA completo (T-01..T-13)**: gate de cobertura, E2E Playwright (5 escenarios × 2 pasadas verdes, incluye subida propia y errores CU-05), k6 a 50 VUs en verde, workflow CI, README+capturas. Falta el **deploy de cierre (T-14..T-16)**.
+- **Fase del proyecto:** MOD-00..MOD-05 en lo esencial: MOD-00..MOD-04 completos (MOD-04 con DoD 5/5 tras automatizar su checklist en el E2E) + **MOD-05 QA completo (T-01..T-13 + T-06-bis)**: gate de cobertura, E2E Playwright (**10 escenarios** × 2 pasadas verdes: demo, subida propia, R0 remito, PDF_SIN_TEXTO, 11 páginas, red caída y 502 — ADR-05-08), k6 a 50 VUs en verde, workflow CI, README+capturas. Falta el **deploy de cierre (T-14..T-16)**.
 - **Git:** ramas unificadas el 13/11 — `main` (ex-`master` renombrada, con merge fast-forward de `pruebaFront`) contiene todo el historial (MOD-00..MOD-05 Fase 4-bis, hasta `6db502d`); `remote origin` = https://github.com/kvnn04/sofredoc.git (orden de push explícita de Kevin; **la ejecución del push la hace Kevin**). `pruebaFront` queda apuntando al mismo commit (borrable).
 - **Siguiente acción concreta:** (1) push de `main` a GitHub (lo ejecuta Kevin; el CI `.github/workflows/verificacion.yml` corre solo al pushear) → (2) deploy Render + Vercel siguiendo `docs/despliegue.md` (15–20 min) → (3) DoD global (`DoD`).
 - **Módulos:** 00 🟢 · 01 🟢 · 02 🟢 · 03 🟢 · 04 🟢 · 05 🟡 (QA 100%, deploy pendiente).
@@ -322,3 +322,34 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - ~29 llamadas `gpt-4o-mini` (~2k tokens entrada + ~250 salida c/u): 16 en intentos fallidos pre-fix (auditorías que terminaron en 502), 1 de exploración, 12 en verificaciones post-fix (matriz × 2, escaneado no consumió, medición de latencia × 10) — **USD ≈ 0.015 (estimado)**. Ninguna auditoría desde el fix necesitó reintento.
+
+### [2026-11-13] Sesión 8 — Extensión del E2E a 10 escenarios (solicitud de Kevin)
+
+**Qué se hizo:**
+- Kevin pidió ≥ 5 casos E2E nuevos; elegidos con pregunta (A+B+C+D+E): R0 remito, PDF_SIN_TEXTO, 11 páginas, red caída y EXTRACCION_FALLIDA.
+- Backend (solo mock, ADR-05-08): fixture `extraccion-remito.json` (tipo REMITO, fecha estática — R0 corta antes de R5) + marca `"remito"` en `MARCAS_EJEMPLOS` del `MockExtractor`; test unitario del routing (pytest 110 passed, cobertura `infrastructure/llm` 100%).
+- Fixtures E2E commiteadas en `qa/e2e/fixtures/`: `remito-transporte-2026.pdf` (1 pág. con texto), `pdf-escaneado-grafico.pdf` (0 chars de texto), `factura-11-paginas.pdf` (11 págs.) — generadas por el nuevo `backend/scripts/generar_fixtures_e2e.py` (reportlab) y verificadas con pypdf (chars/páginas correctos).
+- E2E: escenarios 6–10 en `qa/e2e/auditoria.spec.ts` (describe "Escenarios extendidos"); 9 y 10 usan `page.route` (abort / fulfill 502) sin tocar el backend real, asertando CU-05 (resultado previo conservado).
+- Docs: `qa/README.md` (10 escenarios + regeneración de fixtures), T-06-bis en `03-tasks.md`, checklist §2 + ADR-05-08 en `04-verification.md`.
+
+**Verificación ejecutada (evidencia real):**
+- `pytest tests -q` → **110 passed** · `ruff check backend` → All checks passed · `ruff format --check backend` → 58 files already formatted.
+- Playwright **10/10 passed en 2 pasadas consecutivas** (1.3 m / 34.4 s), `retries: 0`, cero flakes (npx.cmd por ExecutionPolicy de PowerShell).
+
+**Archivos creados/modificados clave:**
+- Backend: `src/infrastructure/llm/mock_extractor.py` (variante + marca remito), `data/fixtures/extraccion-remito.json` (nuevo), `scripts/generar_fixtures_e2e.py` (nuevo), `tests/unit/test_extractor.py` (+1 test).
+- QA: `qa/e2e/auditoria.spec.ts` (+5 escenarios, header actualizado), `qa/e2e/fixtures/*.pdf` (3 commiteados), `qa/README.md`.
+- Specs: `03-tasks.md` (T-06-bis) y `04-verification.md` (§2 + ADR-05-08) de MOD-05; `specs/PROGRESO.md` (esta entrada).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- ADR-05-08: extensión E2E a 10 escenarios + fixture REMITO del mock + PDFs fixture del E2E. Menor: sin cambios de contrato API, esquema de BD ni reglas de negocio (el caso R0 ya estaba probado a nivel dominio).
+
+**Estado exacto al cerrar:**
+- Módulos 00–04 🟢 · 05 🟡 (QA completo con E2E 10/10; deploy T-14..T-16 pendiente de plataformas de Kevin). Servidores levantados al cerrar: backend `:8000` (modo llm) + frontend `:5173`.
+
+**Próximos pasos para la próxima sesión:**
+1. Deploy de cierre (T-14..T-16) con `docs/despliegue.md`: push de `main` a GitHub (lo ejecuta Kevin) → Render Blueprint → Vercel (`VITE_API_URL`, `CORS_ORIGINS`) → smoke post-deploy → DoD global.
+2. En Render, decidir `EXTRACTOR_MODE` de producción (llm real vs mock de demo) y registrar la key como variable de entorno de la plataforma (nunca en el repo).
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM en esta sesión (el E2E corre en modo mock, RN-5-01; los escenarios 9–10 interceptan la red a nivel navegador).

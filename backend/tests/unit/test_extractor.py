@@ -227,7 +227,7 @@ class TestMockExtractor:
         assert primera.json_crudo_ia is not None
 
     def test_variantes_validas_contra_el_esquema(self):
-        for variante in ("aprobada", "rechazado", "monto-alto-sin-oc"):
+        for variante in ("aprobada", "rechazado", "monto-alto-sin-oc", "remito"):
             resultado = MockExtractor(RUTA_FIXTURES, variante).extraer("x", "y")
             FacturaExtraida.model_validate(resultado.json_crudo_ia)  # no lanza
 
@@ -257,6 +257,14 @@ class TestMockExtractor:
         assert abs(desvio.monto_total - (suma + desvio.impuestos)) > Decimal("1.00")  # R3
         assert monto_alto.monto_total > Decimal("500000")  # dispara R4 (tope estricto)
         assert monto_alto.numero_orden_compra is None
+
+    def test_remito_dispara_la_fixture_remito(self):
+        """Archivo con 'remito' en el nombre → fixture REMITO (el motor ya cubre R0)."""
+        extractor = MockExtractor(RUTA_FIXTURES, "aprobada")  # la variante da igual
+
+        factura = extractor.extraer("x", "remito-transporte-2026.pdf").factura
+
+        assert factura.tipo_comprobante == "REMITO"
 
     def test_archivo_original_del_ejemplo_resubido_tambien_resuelve(self):
         """Si el usuario descarga el PDF y lo re-sube, conserva su escenario."""

@@ -1,0 +1,18 @@
+{
+  "tipo_comprobante": "REMITO",
+  "numero_comprobante": "R-0001-00000999",
+  "cuit_emisor": "30-71234567-1",
+  "razon_social": "Comercial Austral SRL",
+  "fecha_emision": "2026-11-07",
+  "numero_orden_compra": null,
+  "items": [
+    {
+      "descripcion": "Transferencia de mercadería (12 cajas)",
+      "cantidad": 12,
+      "precio_unitario": 1500.00,
+      "subtotal": 18000.00
+    }
+  ],
+  "impuestos": 0.00,
+  "monto_total": 18000.00
+}
