@@ -29,8 +29,9 @@ cd backend ; python -m venv .venv ; .\.venv\Scripts\Activate ; pip install -r re
 ## E2E — Playwright
 
 ```powershell
-# Desde la raíz. Levanta solo los 2 procesos (backend mock + frontend Vite)
-# con `webServer` y corre los 10 escenarios contra la UI real.
+# Desde la raíz. Levanta sus PROPIOS procesos en puertos exclusivos del E2E
+# (backend mock :8010 con BD efímera + frontend :5175) y corre los 10
+# escenarios contra la UI real. No toca ni depende de lo que corras a mano.
 npx playwright test qa/e2e/auditoria.spec.ts
 
 # Reporte HTML de la última corrida
@@ -67,11 +68,12 @@ Notas:
 
 - **`retries: 0`** (RN-5-06): un flake detiene la corrida y se investiga; no se
   reintenta a ciegas.
-- **RN-5-05:** el backend del E2E usa `DB_PATH=qa/artifacts/e2e-sofredoc.db`
-  (gitignored) y lo resetea al arrancar. Nunca toca la BD real
-  `backend/data/sofredoc.db`. Si preferís correr el backend a mano y que
-  Playwright lo reutilice (`reuseExistingServer` en local), arrancalo con esa
-  misma `DB_PATH` efímera.
+- **Puertos exclusivos del E2E (ADR-05-09):** backend **:8010** (mock, BD efímera
+  `qa/artifacts/e2e-sofredoc.db`) y frontend **:5175** (su proxy `/api` apunta al
+  backend del E2E vía `VITE_PROXY_TARGET`), con `reuseExistingServer: false`.
+  Podés correr los tests con tu instancia manual arriba (`:8000`/`:5173`) sin
+  interferencia: antes, si el backend manual estaba en modo `llm`, Playwright lo
+  reutilizaba y la matriz de verdad mock no aplicaba (bug visto en el escenario 2).
 - Chromium headless no renderiza PDFs en línea: el visor queda en blanco en el
   E2E, pero el flujo de auditoría es completo (limitación del navegador, no del
   producto).

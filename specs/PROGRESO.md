@@ -335,6 +335,7 @@
 **Verificación ejecutada (evidencia real):**
 - `pytest tests -q` → **110 passed** · `ruff check backend` → All checks passed · `ruff format --check backend` → 58 files already formatted.
 - Playwright **10/10 passed en 2 pasadas consecutivas** (1.3 m / 34.4 s), `retries: 0`, cero flakes (npx.cmd por ExecutionPolicy de PowerShell).
+- **Fix post-reporte de Kevin (escenario 2 fallaba):** `reuseExistingServer` hacía que el E2E reutilizara el backend manual en modo `llm` → la matriz mock no aplicaba (montos $270.000/$285.000 vs $28.200/$30.000 de la fixture). Corregido con ADR-05-09: puertos exclusivos (backend :8010, frontend :5175), `reuseExistingServer: false` y proxy del frontend configurable por `VITE_PROXY_TARGET` (default :8000 intacto). Re-verificado: **10/10 × 2 pasadas (52 s / 35.1 s) con el backend manual llm corriendo en :8000 en paralelo**.
 
 **Archivos creados/modificados clave:**
 - Backend: `src/infrastructure/llm/mock_extractor.py` (variante + marca remito), `data/fixtures/extraccion-remito.json` (nuevo), `scripts/generar_fixtures_e2e.py` (nuevo), `tests/unit/test_extractor.py` (+1 test).
@@ -343,6 +344,7 @@
 
 **Decisiones / ADRs nuevos (si los hay):**
 - ADR-05-08: extensión E2E a 10 escenarios + fixture REMITO del mock + PDFs fixture del E2E. Menor: sin cambios de contrato API, esquema de BD ni reglas de negocio (el caso R0 ya estaba probado a nivel dominio).
+- ADR-05-09: puertos exclusivos del E2E (backend :8010, frontend :5175) + `reuseExistingServer: false` + `VITE_PROXY_TARGET` en `vite.config.ts`. Menor: es tooling de QA; el uso manual (:8000/:5173) no cambia. Motiva el bug del escenario 2 reportado por Kevin.
 
 **Estado exacto al cerrar:**
 - Módulos 00–04 🟢 · 05 🟡 (QA completo con E2E 10/10; deploy T-14..T-16 pendiente de plataformas de Kevin). Servidores levantados al cerrar: backend `:8000` (modo llm) + frontend `:5173`.
