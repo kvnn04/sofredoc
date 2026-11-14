@@ -474,3 +474,29 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM (verificación en modo mock, RN-5-01).
+
+### [2026-11-13] Sesión 13 — Update de actions de CI a v7 (warning de Node 20 deprecado)
+
+**Qué se hizo:**
+- Kevin pregunta por el warning del CI: *"Node.js 20 is deprecated… actions/checkout@v4, setup-node@v4, setup-python@v5, upload-artifact@v4 forced to run on Node.js 24"*. Es solo un aviso (el job pasa igual): GitHub forzó Node 24 como runtime de actions JavaScript el 2026-06-16; las majors fijadas declaraban Node 20.
+- Elegido con pregunta (Kevin): **solo actions de CI** (no runtimes Python/Node ni dependencias).
+- Update: `checkout@v4 → v7` · `setup-python@v5 → v7` · `setup-node@v4 → v7` · `upload-artifact@v4 → v7` (todas con runtime Node 24 nativo; versiones vigentes verificadas: checkout v7.0.1, setup-node v7.0.0, setup-python v7, upload-artifact v7.0.2) + comentario en el header del workflow.
+
+**Verificación ejecutada (evidencia real):**
+- `grep uses:` en el workflow → las 4 actions en v7, sin refs viejas.
+- Re-run del CI por Kevin tras push: el warning de Node 20 debe desaparecer y el job completo debe seguir en verde (pytest → ruff → build → E2E → k6 smoke → k6 funcional).
+
+**Archivos creados/modificados clave:**
+- `.github/workflows/verificacion.yml` (4 pins + header), `specs/PROGRESO.md` (esta entrada).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- Ninguno: mantenimiento de tooling de CI (sin cambios de contrato API/esquema/reglas). Los runtimes de CI quedan en Python 3.13 / Node 24 (paridad con el venv/lockfiles locales).
+
+**Estado exacto al cerrar:**
+- `main` con este update commiteado localmente; pendiente push de Kevin. Módulos 00–04 🟢 · 05 🟡 (falta deploy T-14..T-16).
+
+**Próximos pasos para la próxima sesión:**
+1. Push de `main` → CI en verde sin warning → deploy de cierre (T-14..T-16) con `docs/despliegue.md` → `DoD`.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM.
