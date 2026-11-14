@@ -500,3 +500,41 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM.
+
+### [2026-11-13] Sesión 14 — Fix extractor: Factura A con IVA discriminado → `impuestos` (ADR-02-10)
+
+**Qué se hizo:**
+- Kevin reporta falso positivo con `EXTRACTOR_MODE=llm` sobre una Factura A real: ítems netos $353.000 y total $427.130 extraídos bien, pero `impuestos = 0` → R3 rechazaba DISCREPANCIA_CONTABLE por $74.130 (el IVA 21% al pie). Causa raíz: `impuestos` no tenía descripción semántica en el esquema y el prompt decía "impuestos faltante es 0" — el modelo casaba el campo con la fila 'Importe Otros Tributos' ($0) e ignoraba el IVA discriminado.
+- Fix **solo de extracción semántica** (R3 y su fórmula intactos, pedido explícito de Kevin):
+  - `domain/models.py`: `Field(description=...)` AFIP en `impuestos` (suma de TODOS los impuestos discriminados al pie; nunca 0 en Factura A con IVA informado; 0 solo en B/C), `items[].subtotal` ('Subtotal Neto', NUNCA 'Subtotal c/IVA'), `items[].precio_unitario` (neto si discrimina IVA) y `monto_total` (no confundir con Neto Gravado). Las `description` viajan al JSON Schema strict (clave `description` ya estaba en `_CLAVES_ESTRUCTURADAS`).
+  - `prompt.py`: SYSTEM_PROMPT reescrito con reglas AFIP/ARCA explícitas + reintento reforzado (corregido el ambiguo "impuestos falso = 0" por "faltante = 0, p. ej. Factura B").
+- Decisión preguntada a Kevin: (1) verificación con LLM real → sí; (2) fixture solo JSON sintético → sí (el PDF real queda fuera del repo, en la raíz).
+- Fixture `data/fixtures/extraccion-factura-a-iva.json` (datos reales de la factura: 3 ítems netos + impuestos 74.130 + total 427.130; fecha estática 2026-11-12, caducidad R5 ≈ 2027-01-11 como ADR-02-06) + 4 tests nuevos.
+
+**Verificación ejecutada (evidencia real):**
+- `pytest tests -q --cov=src --cov-fail-under=95` → **115 passed** (+4), cobertura total **99.59%** (`domain/` 100%, gate ok).
+- `ruff check backend` → All checks passed · `ruff format --check backend` → 58 files already formatted (1 file reformatted por `ruff format` sobre test_engine.py).
+- **LLM real** (script ad-hoc con SDK directo + key del `.env`; servidor y `.env` de Kevin intactos): **4/4 casos** —
+  - Factura A real → `items 353.000,00 + impuestos 74.130,00 = total 427.130,00` → **APROBADO, R3 OK** (intento 1, 7,6 s) — *el bug queda refutado*.
+  - Matriz de verdad intacta: `factura-aprobada-001` → APROBADO (2,2 s) · `factura-desvio-monto` → RECHAZADO R3 (2,4 s) · `factura-monto-alto-sin-oc` → RECHAZADO R4 (7,3 s).
+  - Latencias con outliers conocidos (ADR-02-09); 0 reintentos.
+
+**Archivos creados/modificados clave:**
+- `backend/src/domain/models.py` (descripciones AFIP), `backend/src/infrastructure/llm/prompt.py` (SYSTEM_PROMPT + reintento).
+- `backend/data/fixtures/extraccion-factura-a-iva.json` (nuevo).
+- `backend/tests/unit/test_engine.py` (+3: fixture válida, R3 verde, motor APROBADO), `backend/tests/unit/test_extractor.py` (+1 descripciones preservadas en esquema; aserciones de Decimal ahora por `type` — con descripciones el schema deja de ser dict exacto).
+- Specs: `specs/modules/02-extraccion-ia/04-verification.md` (ADR-02-10), `specs/PROGRESO.md` (esta entrada).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- ADR-02-10 (MOD-02): semántica AFIP en esquema + prompt. Menor: no cambia contrato API, esquema de BD ni reglas de negocio (R3 intacto; la IA sigue solo extrayendo).
+
+**Estado exacto al cerrar:**
+- Fix commiteado localmente (`main`); backend detenido a pedido de Kevin (él lo levanta). Módulos 00–04 🟢 · 05 🟡 (falta deploy T-14..T-16).
+
+**Próximos pasos para la próxima sesión:**
+1. Kevin re-audita la Factura A real desde la UI en modo `llm` para confirmar el semáforo verde en su flujo normal.
+2. Push de `main` → CI en verde → deploy de cierre (T-14..T-16) con `docs/despliegue.md` → `DoD`.
+3. (Opcional, requiere decisión de contrato) Agregar una Factura A con IVA discriminado como 4º ejemplo del catálogo — hoy la matriz define exactamente 3.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- 4 llamadas `gpt-4o-mini` (todas en intento 1, sin reintentos): ~2k tokens entrada + ~250 salida c/u — **USD ≈ 0.002**.

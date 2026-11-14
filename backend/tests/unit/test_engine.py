@@ -1,10 +1,12 @@
 """Pruebas del MotorReglas: admisión R0, estado global, fallos múltiples e inyección (T-16)."""
 
+import json
 import time
 from datetime import date, timedelta
 from decimal import Decimal
+from pathlib import Path
 
-from src.domain.models import ItemFactura
+from src.domain.models import FacturaExtraida, ItemFactura
 from src.domain.ports.clock_port import ClockPort
 from src.domain.ports.padron_port import PadronProveedoresPort, Proveedor
 from src.domain.rules.base import ContextoAuditoria
@@ -111,3 +113,40 @@ class TestRendimiento:
         motor.evaluar(f, contexto())
         transcurrido_ms = (time.perf_counter() - inicio) * 1000
         assert transcurrido_ms < 10
+
+
+class TestFacturaAConIvaDiscriminado:
+    """Caso real (ADR-02-10): Factura A con IVA discriminado al pie.
+
+    El extractor LLM devolvía `impuestos = 0` (casaba el campo con la fila
+    'Importe Otros Tributos') y R3 rechazaba por el IVA discriminado. Con la
+    semántica corregida (impuestos = suma de TODOS los impuestos discriminados),
+    la misma auditoría queda APROBADO: 353.000 (neto) + 74.130 (IVA 21%)
+    = 427.130. Fixture con fecha estática 2026-11-12: misma caducidad que
+    ADR-02-06 (regenerar antes de ~2027-01-11).
+    """
+
+    RUTA = (
+        Path(__file__).resolve().parents[2] / "data" / "fixtures" / "extraccion-factura-a-iva.json"
+    )
+
+    def _factura_a(self) -> FacturaExtraida:
+        datos = json.loads(self.RUTA.read_text(encoding="utf-8"))
+        return FacturaExtraida.model_validate(datos)  # misma validación del extractor
+
+    def test_fixture_valida_contra_esquema(self) -> None:
+        factura = self._factura_a()
+        assert factura.impuestos == Decimal("74130.00")
+        assert factura.monto_total == Decimal("427130.00")
+
+    def test_r3_verde_con_iva_discriminado(self) -> None:
+        """El fix del bug: R3 pasa con IVA discriminado (antes DISCREPANCIA_CONTABLE)."""
+        resultado = R3ConsistenciaMatematica().evaluar(self._factura_a(), contexto())
+        assert resultado.aprobado
+        assert resultado.codigo_error is None
+
+    def test_motor_completo_aprobado(self) -> None:
+        austral = Proveedor(cuit="30712345671", razon_social="Comercial Austral SRL", activo=True)
+        resultado = MotorReglas().evaluar(self._factura_a(), contexto(austral))
+        assert resultado.estado == "APROBADO"
+        assert all(r.aprobado for r in resultado.reglas)

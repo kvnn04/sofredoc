@@ -440,17 +440,32 @@ class TestEsquemaEstricto:
         # elegir la rama string y devolver '$200.000,00', que Pydantic rechaza.
         esquema = cliente_llm.preparar_esquema_estricto(FacturaExtraida.model_json_schema())
 
-        assert esquema["properties"]["monto_total"] == {"type": "number"}
-        assert esquema["properties"]["impuestos"] == {"type": "number"}
+        assert esquema["properties"]["monto_total"]["type"] == "number"
+        assert esquema["properties"]["impuestos"]["type"] == "number"
         item = esquema["$defs"]["ItemFactura"]["properties"]
-        assert item["cantidad"] == {"type": "number"}
-        assert item["precio_unitario"] == {"type": "number"}
-        assert item["subtotal"] == {"type": "number"}
+        assert item["cantidad"]["type"] == "number"
+        assert item["precio_unitario"]["type"] == "number"
+        assert item["subtotal"]["type"] == "number"
 
     def test_anyof_decimal_acepta_orden_inverso(self):
         esquema = {"anyOf": [{"type": "string"}, {"type": "number"}]}
 
         assert cliente_llm.preparar_esquema_estricto(esquema) == {"type": "number"}
+
+    def test_descripciones_afip_preservadas_en_esquema(self):
+        """ADR-02-10: las `description` de AFIP viajan al esquema strict del LLM.
+
+        El bug real: sin semántica, el LLM casaba `impuestos` con la fila
+        'Importe Otros Tributos' ($0) e ignoraba el IVA discriminado → R3
+        rechazaba Facturas A correctas por el IVA.
+        """
+        esquema = cliente_llm.preparar_esquema_estricto(FacturaExtraida.model_json_schema())
+
+        assert "discriminados" in esquema["properties"]["impuestos"]["description"]
+        assert "NUNCA es 0" in esquema["properties"]["impuestos"]["description"]
+        item = esquema["$defs"]["ItemFactura"]["properties"]
+        assert "Subtotal Neto" in item["subtotal"]["description"]
+        assert "Subtotal c/IVA" in item["subtotal"]["description"]
 
     def test_conserva_enum_format_y_null_de_opcionales(self):
         esquema = cliente_llm.preparar_esquema_estricto(FacturaExtraida.model_json_schema())

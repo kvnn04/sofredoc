@@ -8,12 +8,36 @@ from pydantic import BaseModel, Field
 
 
 class ItemFactura(BaseModel):
-    """Ítem de la factura tal como fue extraído (la IA no corrige datos)."""
+    """Ítem de la factura tal como fue extraído (la IA no corrige datos).
 
-    descripcion: str = Field(min_length=1)
-    cantidad: Decimal = Field(gt=0)
-    precio_unitario: Decimal = Field(ge=0)
-    subtotal: Decimal = Field(ge=0)
+    Las `description` viajan al JSON Schema strict del proveedor (ADR-02-10):
+    definen la semántica AFIP que el LLM no puede inferir de nombres genéricos.
+    """
+
+    descripcion: str = Field(
+        min_length=1,
+        description="Descripción literal del ítem tal como figura en el comprobante.",
+    )
+    cantidad: Decimal = Field(
+        gt=0,
+        description="Cantidad del ítem según el comprobante (número, sin 'Unid.' ni texto).",
+    )
+    precio_unitario: Decimal = Field(
+        ge=0,
+        description=(
+            "Precio unitario SIN IVA de la línea si el comprobante discrimina IVA "
+            "(Factura A); precio unitario final de la línea si no lo discrimina "
+            "(Factura B o C)."
+        ),
+    )
+    subtotal: Decimal = Field(
+        ge=0,
+        description=(
+            "Subtotal de la línea SIN IVA si el comprobante discrimina IVA "
+            "(Factura A: usar la columna 'Subtotal Neto', NUNCA 'Subtotal c/IVA'); "
+            "importe total de la línea si no discrimina IVA (Factura B o C)."
+        ),
+    )
 
 
 class FacturaExtraida(BaseModel):
@@ -26,8 +50,24 @@ class FacturaExtraida(BaseModel):
     fecha_emision: date
     numero_orden_compra: str | None = None
     items: list[ItemFactura] = Field(min_length=1)
-    impuestos: Decimal = Decimal("0.00")
-    monto_total: Decimal = Field(gt=0)
+    impuestos: Decimal = Field(
+        default=Decimal("0.00"),
+        description=(
+            "Suma de TODOS los impuestos discriminados al pie del comprobante "
+            "(IVA 21% + IVA 10,5% + IVA 27% + impuestos internos + percepciones + "
+            "'Importe Otros Tributos'), no únicamente esa última fila. En una "
+            "Factura A con IVA discriminado NUNCA es 0 si el pie informa un monto "
+            "de IVA: usar ese monto. Solo es 0 si el comprobante no discrimina "
+            "impuestos (Factura B o C)."
+        ),
+    )
+    monto_total: Decimal = Field(
+        gt=0,
+        description=(
+            "IMPORTE TOTAL del comprobante tal como figura al pie (neto + "
+            "impuestos); no confundir con 'Importe Neto Gravado'."
+        ),
+    )
 
 
 class ExtraccionResultado(BaseModel):

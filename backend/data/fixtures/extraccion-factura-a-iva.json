@@ -1,0 +1,30 @@
+{
+  "tipo_comprobante": "FACTURA",
+  "numero_comprobante": "00002-00008491",
+  "cuit_emisor": "30-71234567-1",
+  "razon_social": "Comercial Austral SRL",
+  "fecha_emision": "2026-11-12",
+  "numero_orden_compra": "OC-2026-01194",
+  "items": [
+    {
+      "descripcion": "Kit de herramientas dieléctricas aisladas 1000V (12 piezas)",
+      "cantidad": 2,
+      "precio_unitario": 95000.00,
+      "subtotal": 190000.00
+    },
+    {
+      "descripcion": "Casco de seguridad industrial dieléctrico c/ arnés a cremallera",
+      "cantidad": 6,
+      "precio_unitario": 16500.00,
+      "subtotal": 99000.00
+    },
+    {
+      "descripcion": "Reflector LED portátil recargable IP65 50W",
+      "cantidad": 2,
+      "precio_unitario": 32000.00,
+      "subtotal": 64000.00
+    }
+  ],
+  "impuestos": 74130.00,
+  "monto_total": 427130.00
+}
