@@ -44,10 +44,17 @@ class SqliteAuditoriaRepository:
             self._conn.commit()
 
     def listar(self, limit: int = 20, offset: int = 0) -> list[RegistroAuditoria]:
-        """Listado paginado, el más nuevo primero (CU-04)."""
+        """Listado paginado, el más nuevo primero (CU-04).
+
+        `creado_en` tiene precisión de segundos: dos auditorías del mismo
+        segundo empatan. El desempate por `rowid DESC` (orden de inserción)
+        hace determinístico el "más nuevo primero" (bug de CI: el E2E obtenía
+        otra fila del mismo segundo; ADR-03-08).
+        """
         with self._lock:
             filas = self._conn.execute(
-                "SELECT * FROM comprobante_auditoria ORDER BY creado_en DESC LIMIT ? OFFSET ?",
+                "SELECT * FROM comprobante_auditoria "
+                "ORDER BY creado_en DESC, rowid DESC LIMIT ? OFFSET ?",
                 (limit, offset),
             ).fetchall()
         return [self._mapear(fila) for fila in filas]

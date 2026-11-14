@@ -91,6 +91,34 @@ def test_fila_8_limit_por_defecto_y_historial_vacio(crear_cliente):
     assert len(respuesta.json()) == 2
 
 
+def test_fila_8_mismo_segundo_desempate_por_insercion(crear_cliente):
+    """CU-04 (ADR-03-08): `creado_en` con precisión de segundos → con empate,
+    el desempate es por orden de inserción (`rowid DESC`): el último insertado
+    es el "más nuevo". Bug visto en CI (E2E escenario 4): dos auditorías del
+    mismo segundo y un `ORDER BY` sin desempate devolvía otra fila como
+    "más reciente"."""
+    cliente = crear_cliente()
+    _sembrar(
+        cliente.app.state.auditorias_repo,
+        [
+            ("2026-11-12T17:00:00Z", "APROBADO"),
+            ("2026-11-12T17:00:00Z", "RECHAZADO"),
+            ("2026-11-12T17:00:00Z", "RECHAZADO"),
+        ],
+    )
+
+    respuesta = cliente.get("/api/v1/historial")
+
+    assert respuesta.status_code == 200
+    items = respuesta.json()
+    assert [item["id"] for item in items] == ["aud_00000002", "aud_00000001", "aud_00000000"]
+    assert [item["creado_en"] for item in items] == [
+        "2026-11-12T17:00:00Z",
+        "2026-11-12T17:00:00Z",
+        "2026-11-12T17:00:00Z",
+    ]
+
+
 # ------------------------------------------------------------------ fila 9
 def test_fila_9_detalle_completo(crear_cliente):
     """CU-04: el detalle incluye `json_crudo_ia`, reglas y montos redondeados."""

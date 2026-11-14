@@ -446,3 +446,31 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM.
+
+### [2026-11-13] Sesión 12 — Fix CI: orden del historial no determinístico con mismo segundo (E2E escenario 4 falló en GitHub Actions)
+
+**Qué se hizo:**
+- Kevin reporta el 2º error de CI: escenario 4 del E2E falla al asertar `FALTA_ORDEN_COMPRA` (1 failed, 1 did not run por el `describe.serial`, 8 passed).
+- Diagnóstico: `creado_en` persiste con precisión de **segundos** (`_ahora_utc` → `%Y-%m-%dT%H:%M:%SZ`) y el listado usaba `ORDER BY creado_en DESC` **sin desempate**. En el runner (rápido, ~1,3 s/test) las auditorías del escenario 2 y 3 cayeron en el mismo segundo → SQLite devolvió las filas empatadas en orden indefinido → la UI cargó como "más reciente" la del escenario 2 (RECHAZADO R3) y `FALTA_ORDEN_COMPRA` (R4) no aparecía. Local no fallaba por timing (~50 s de corrida, segundos distintos).
+- Fix (ADR-03-08): `ORDER BY creado_en DESC, rowid DESC` en `SqliteAuditoriaRepository.listar` — `rowid` refleja el orden de inserción, así el "más nuevo primero" (CU-04) es determinístico incluso con segundo empatado. Sin cambios de DDL, contrato API ni reglas.
+- Test nuevo `test_fila_8_mismo_segundo_desempate_por_insercion`: 3 filas con mismo `creado_en` → orden de inserción invertido (reproduce el bug de CI a nivel integración).
+
+**Verificación ejecutada (evidencia real):**
+- `pytest backend/tests -q --cov=src --cov-fail-under=95` → **111 passed** (corrida limpia 11.15 s); cobertura total **99.59%**, dominio 100% (gate ok).
+- `ruff check backend` → All checks passed · `ruff format --check backend` → 58 files already formatted.
+- E2E Playwright con el fix → **10/10 passed (54.5 s)**.
+
+**Archivos creados/modificados clave:**
+- `backend/src/infrastructure/db/sqlite_repository.py` (ORDER BY con desempate), `backend/tests/integration/test_api_historial.py` (+1 test), `specs/modules/03-api-sqlite/04-verification.md` (ADR-03-08), `specs/PROGRESO.md` (esta entrada).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- ADR-03-08 (MOD-03): desempate por `rowid DESC`. Menor: refuerza el CU-04 sin cambiar DDL/contrato/reglas.
+
+**Estado exacto al cerrar:**
+- `main` con este fix commiteado localmente; pendiente push de Kevin y re-run del CI (que debería llegar verde hasta k6). Módulos 00–04 🟢 · 05 🟡 (falta deploy T-14..T-16).
+
+**Próximos pasos para la próxima sesión:**
+1. Push de `main` → CI en verde → deploy de cierre (T-14..T-16) con `docs/despliegue.md` → `DoD`.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM (verificación en modo mock, RN-5-01).
