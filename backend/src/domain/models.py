@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ItemFactura(BaseModel):
@@ -46,6 +46,30 @@ class ItemFactura(BaseModel):
     )
 
 
+class ImpuestoDetalle(BaseModel):
+    """Una línea de impuesto discriminada al pie, extraída LITERAL (ADR-02-12).
+
+    El LLM no suma: cada línea del pie va por separado y el sistema calcula
+    el total con Python + `Decimal` (la aritmética mental del modelo producía
+    errores como $94.600 por $145.800).
+    """
+
+    concepto: str = Field(
+        min_length=1,
+        description=(
+            "Concepto literal de la línea de impuesto al pie, tal como figura "
+            "(p. ej. 'IVA 21%', 'IVA 10,5%', 'Percepción IIBB ARBA 3,00%')."
+        ),
+    )
+    monto: Decimal = Field(
+        ge=0,
+        description=(
+            "Monto de ESA línea sola tal como figura (número, sin '$' ni "
+            "separadores de miles). NO sumar varias líneas en este campo."
+        ),
+    )
+
+
 class FacturaExtraida(BaseModel):
     """Comprobante estructurado producido por la extracción (MOD-02)."""
 
@@ -60,31 +84,58 @@ class FacturaExtraida(BaseModel):
             "se adicionan."
         ),
     )
-    numero_comprobante: str | None = None
+    numero_comprobante: str | None = Field(
+        default=None,
+        description=(
+            "Número de comprobante COMPLETO combinando literalmente ambos "
+            "datos del comprobante: Punto de Venta (5 dígitos) + '-' + Comp. "
+            "Nro (8 dígitos), p. ej. '00005-00019384'. Si el comprobante "
+            "muestra 'Punto de Venta: 00005' y 'Comp. Nro: 00019384', "
+            "devolver '00005-00019384', nunca solo '00019384'."
+        ),
+    )
     cuit_emisor: str  # se normaliza y valida con el VO CUIT en las reglas
     razon_social: str = Field(min_length=1)
     fecha_emision: date
     numero_orden_compra: str | None = None
     items: list[ItemFactura] = Field(min_length=1)
+    detalle_impuestos: list[ImpuestoDetalle] = Field(
+        default_factory=list,
+        description=(
+            "Cada línea de impuesto o tributo discriminada al pie, UNA "
+            "entrada por línea con el concepto literal y el monto de ESA "
+            "línea sola: 'IVA 21%', 'IVA 10,5%', 'IVA 27%', impuestos "
+            "internos, percepciones (IIBB ARBA, IVA, SIRTAC), impuestos "
+            "internos y 'Importe Otros Tributos'. NO sumar ni totalizar: la "
+            "suma la calcula el sistema (un elemento por línea, montos "
+            "separados). Excluir SIEMPRE los desgloses informativos del "
+            "Régimen de Transparencia Fiscal al Consumidor (Ley 27.743) — "
+            "'IVA Contenido' / 'IVA Contenido (incluido en el precio final)' "
+            "/ 'Otros Impuestos Nacionales Indirectos' — porque ya están "
+            "INCLUIDOS en el total y en los subtotales de los ítems. Si un "
+            "mismo tributo aparece dos veces — en una tabla de desglose (p. "
+            "ej. 'DETALLE DE OTROS TRIBUTOS / PERCEPCIONES') y además en la "
+            "línea agregada del pie ('Importe Otros Tributos') — es EL MISMO "
+            "monto: cargarlo UNA sola vez, nunca duplicarlo. Lista "
+            "vacía si el pie no discrimina líneas de impuesto."
+        ),
+    )
     impuestos: Decimal = Field(
         default=Decimal("0.00"),
         description=(
             "Impuestos que se ADICIONAN a los subtotales de los ítems para "
             "llegar al total (la ecuación es: suma de ítems + impuestos = "
-            "total). Según la letra del comprobante (ver letra_comprobante): "
-            "- Factura A (IVA discriminado): suma de TODOS los impuestos "
-            "discriminados al pie (IVA 21% + IVA 10,5% + IVA 27% + impuestos "
-            "internos + percepciones + 'Importe Otros Tributos'), no únicamente "
-            "esa última fila; NUNCA es 0 si el pie informa un monto de IVA. "
-            "- Factura B o C (IVA incluido en el precio): 0 si entre los "
-            "subtotales y el total no se suma nada. NO cargar aquí el recuado "
-            "informativo del Régimen de Transparencia Fiscal al Consumidor (Ley "
-            "27.743) — 'IVA Contenido' / 'IVA Contenido (incluido en el precio "
-            "final)' / 'Otros Impuestos Nacionales Indirectos' — porque ya está "
-            "INCLUIDO en el total y en los subtotales de los ítems (no se "
-            "adiciona). Solo sumar percepciones u otros tributos que figuren "
-            "como línea adicional entre los subtotales y el total (p. ej. "
-            "'Percepciones / Otros Tributos' mayor a 0)."
+            "total). Campo DERIVADO (ADR-02-12): cuando `detalle_impuestos` "
+            "trae líneas, el sistema lo recalcula en Python como la suma "
+            "exacta con Decimal — el modelo NO lo completa ni lo suma. Sin "
+            "detalle (fixtures del modo mock), conserva el valor literal "
+            "extraído. Semántica: en Factura A es la suma de TODOS los "
+            "impuestos discriminados al pie (IVA 21% + IVA 10,5% + IVA 27% + "
+            "impuestos internos + percepciones + 'Importe Otros Tributos'); "
+            "NUNCA es 0 si el pie informa un monto de IVA. En Factura B o C "
+            "es 0 salvo percepciones que se adicionen; los desgloses "
+            "informativos de Ley 27.743 ('IVA Contenido', INCLUIDO en el "
+            "total) nunca se suman aquí."
         ),
     )
     monto_total: Decimal = Field(
@@ -94,6 +145,20 @@ class FacturaExtraida(BaseModel):
             "impuestos); no confundir con 'Importe Neto Gravado'."
         ),
     )
+
+    @model_validator(mode="after")
+    def _recalcular_impuestos_desde_detalle(self) -> "FacturaExtraida":
+        """ADR-02-12: `impuestos` se calcula en Python, nunca en el LLM.
+
+        Si `detalle_impuestos` trae líneas extraídas literalmente, el total es
+        la suma exacta con `Decimal` — el modelo no hace aritmética mental
+        (bug real: devolvió 94.600 por 145.800). Sin detalle (fixtures del
+        modo mock y comprobantes sin líneas al pie) queda el valor literal:
+        retrocompatibilidad total con las fixtures existentes.
+        """
+        if self.detalle_impuestos:
+            self.impuestos = sum((linea.monto for linea in self.detalle_impuestos), Decimal("0.00"))
+        return self
 
 
 class ExtraccionResultado(BaseModel):

@@ -1,0 +1,39 @@
+{
+  "tipo_comprobante": "FACTURA",
+  "letra_comprobante": "A",
+  "numero_comprobante": "00005-00019384",
+  "cuit_emisor": "30-71234567-1",
+  "razon_social": "Comercial Austral SRL",
+  "fecha_emision": "2026-11-14",
+  "numero_orden_compra": "OC-2026-01194",
+  "items": [
+    {
+      "descripcion": "Servicio de mantenimiento predictivo de tablero eléctrico (gravado 21%)",
+      "cantidad": 1,
+      "precio_unitario": 360000.00,
+      "subtotal": 360000.00
+    },
+    {
+      "descripcion": "Capacitación técnica in company 40 hs (gravado 10,5%)",
+      "cantidad": 1,
+      "precio_unitario": 440000.00,
+      "subtotal": 440000.00
+    }
+  ],
+  "detalle_impuestos": [
+    {
+      "concepto": "IVA 21%",
+      "monto": 75600.00
+    },
+    {
+      "concepto": "IVA 10,5%",
+      "monto": 46200.00
+    },
+    {
+      "concepto": "Percepción IIBB ARBA 3,00% (Otros Tributos)",
+      "monto": 24000.00
+    }
+  ],
+  "impuestos": 145800.00,
+  "monto_total": 945800.00
+}

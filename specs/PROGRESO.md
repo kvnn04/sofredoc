@@ -6,7 +6,7 @@
 
 ## Estado actual (resumen rápido)
 
-- **Fase del proyecto:** MOD-00..MOD-05 en lo esencial: MOD-00..MOD-04 completos (MOD-04 con DoD 5/5 tras automatizar su checklist en el E2E) + **MOD-05 QA completo (T-01..T-13 + T-06-bis + T-10-bis)**: gate de cobertura, E2E Playwright (**10 escenarios** × 2 pasadas verdes — ADR-05-08), k6 saturación (50 VUs) y funcional en verde, workflow CI (actions v7), README+capturas. Post-QA: **ADR-02-10** (Factura A con IVA discriminado) y **ADR-02-11** (letra + Ley 27.743 en B/C), ambos verificados con LLM real (4/4 y 5/5) — suite en **119 passed** (99.59%). Falta el **deploy de cierre (T-14..T-16)**.
+- **Fase del proyecto:** MOD-00..MOD-05 en lo esencial: MOD-00..MOD-04 completos (MOD-04 con DoD 5/5 tras automatizar su checklist en el E2E) + **MOD-05 QA completo (T-01..T-13 + T-06-bis + T-10-bis)**: gate de cobertura, E2E Playwright (**10 escenarios** × 2 pasadas verdes — ADR-05-08), k6 saturación (50 VUs) y funcional en verde, workflow CI (actions v7), README+capturas. Post-QA: **ADR-02-10** (Factura A con IVA discriminado), **ADR-02-11** (letra + Ley 27.743 en B/C) y **ADR-02-12** (`detalle_impuestos` línea a línea + `impuestos` calculado en Python + gate de consistencia pre-reintento), verificados con LLM real (4/4, 5/5 y la Factura A mixta real APROBADO) — suite en **129 passed** (99.61%). Falta el **deploy de cierre (T-14..T-16)**.
 - **Git:** ramas unificadas el 13/11 — `main` (ex-`master` renombrada, con merge fast-forward de `pruebaFront`) contiene todo el historial (MOD-00..MOD-05 Fase 4-bis, hasta `6db502d`); `remote origin` = https://github.com/kvnn04/sofredoc.git (orden de push explícita de Kevin; **la ejecución del push la hace Kevin**). `pruebaFront` queda apuntando al mismo commit (borrable).
 - **Siguiente acción concreta:** (1) push de `main` a GitHub (lo ejecuta Kevin; incluye fixes de CI `b5c86ea`/`4824846`/`d2c1735`, los fixes de extracción ADR-02-10 `1591eda` y ADR-02-11 + docs; el CI corre solo al pushear) → (2) deploy Render + Vercel siguiendo `docs/despliegue.md` (15–20 min) → (3) DoD global (`DoD`).
 - **Módulos:** 00 🟢 · 01 🟢 · 02 🟢 · 03 🟢 · 04 🟢 · 05 🟡 (QA 100%, deploy pendiente).
@@ -576,3 +576,40 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - 5 llamadas `gpt-4o-mini` (todas en intento 1): ~2k tokens entrada + ~250 salida c/u — **USD ≈ 0.003**.
+
+### [2026-11-14] Sesión 16 — Fix extractor: Factura A mixta con percepciones (ADR-02-12)
+
+**Qué se hizo:**
+- Kevin reporta el 3er falso positivo en `EXTRACTOR_MODE=llm`: Factura A real con alícuotas mixtas + percepción (neto $800.000 — $360.000 al 21% + $440.000 al 10,5% —, IVA 21% $75.600, IVA 10,5% $46.200, Percepción IIBB ARBA 3% $24.000, total $945.800): el schema le pedía un único escalar `impuestos` y el LLM **sumaba las 3 líneas de memoria** → devolvió 94.600 (error de $51.200) → R3 `DISCREPANCIA_CONTABLE`. Además `numero_comprobante` salía '00019384' sin el Punto de Venta.
+- 5 decisiones preguntadas a Kevin (aceptó las 5 recomendadas): (1) recálculo en el dominio, (2) `impuestos` fuera del schema del LLM, (3) fixtures mock intactas + fixture nueva mixta, (4) `numero` solo semántica en schema/prompt (sin normalizar en código), (5) verificación con LLM real con este PDF.
+- **Implementación:** `ImpuestoDetalle {concepto, monto}` + `FacturaExtraida.detalle_impuestos: list[ImpuestoDetalle]` (una entrada por línea al pie, extraída literal) + `model_validator` que recalcula `impuestos = Σ montos` en Python/Decimal cuando el detalle trae líneas (fixtures mock sin el campo quedan intactas — retrocompat total) + description de `numero_comprobante` 'PPPPP-NNNNNNNN' (ej. '00005-00019384') + `esquema_para_llm()` en el extractor retira `impuestos` del JSON Schema strict (el modelo ya no puede errar la suma; trazabilidad línea a línea en el JSON crudo) + reglas de prompt: copiar dígito a dígito, excluir Ley 27.743, no duplicar tributos.
+- **Hallazgo intermedio 1 (corrida 1):** el LLM copió 'IVA 10,5%: $ 46.200,00' como 46.000 (texto limpio en el PDF; todo lo demás perfecto) — remedio preguntado a Kevin → **gate de consistencia pre-reintento**: el extractor evalúa la MISMA ecuación de R3 vía nuevo helper de dominio `calculo_total()` (fuente única con `TOLERANCIA`; solo FACTURA — en REMITO decide R0); si el intento no cuadra, reintenta (RN-2-03 conserva el tope de 2 llamadas) y si ningún intento cuadra sale el último validado y R3 decide (RECHAZADO = 200 OK; nunca se corrigen datos).
+- **Hallazgo intermedio 2 (corrida 2):** el reintento arregló el resbalón (46.200 ✓) pero reveló el **doble conteo** del tributo: el PDF trae una tabla 'DETALLE DE OTROS TRIBUTOS / PERCEPCIONES' (Percepción IIBB $24.000) Y la línea agregada del pie 'Importe Otros Tributos: $ 24.000,00' — el mismo monto dos veces → regla de no-duplicación agregada a schema + prompt (corrida 3: 3 líneas exactas).
+- **Verificación con LLM real (4 corridas ad-hoc, script en temp fuera del repo):** mixta real → **intento 1 inconsistente (gate lo detectó) → intento 2 → `detalle_impuestos` = IVA 21% 75.600 + IVA 10,5% 46.200 + Perc. IIBB 24.000 → `impuestos = 145.800` recalculado en Python → `numero = '00005-00019384'` → R1–R5 OK → APROBADO**; matriz de verdad intacta (aprobada → APROBADO; desvío genuino → RECHAZADO R3 consumiendo su reintento por diseño; monto-alto → RECHAZADO R4).
+- Fixture `data/fixtures/extraccion-factura-a-mixta.json` (datos reales del comprobante; fecha estática 2026-11-14, caducidad R5 ≈ 2027-01-13 como ADR-02-06) + espejo `frontend/src/domain/types.ts` (`ImpuestoDetalle`).
+
+**Verificación ejecutada (evidencia real):**
+- `pytest tests -q --cov=src --cov-fail-under=95` → **129 passed** (+10: 5 dominio/motor + 2 esquema + 3 gate), cobertura total **99.61%** (`domain/` 100%, `infrastructure/llm` 100%).
+- `ruff check src scripts tests` → All checks passed · `ruff format --check` → 58 files already formatted.
+- `npm.cmd run build` (frontend) → **✓ built in 6.04 s** (tsc strict con el espejo nuevo).
+- **LLM real:** 4 corridas ad-hoc documentadas arriba; el gate de consistencia demostró su valor detectando el resbalón 46.000→46.200 y la regla de no-duplicación eliminó el doble conteo de la percepción.
+
+**Archivos creados/modificados clave:**
+- `backend/src/domain/models.py` (ImpuestoDetalle + detalle_impuestos + validador + descriptions AFIP), `backend/src/domain/rules/r3_matematica.py` (helper `calculo_total` compartido con R3), `backend/src/infrastructure/llm/structured_extractor.py` (`esquema_para_llm` + gate de consistencia), `backend/src/infrastructure/llm/prompt.py` (SYSTEM + reintento reforzado).
+- `backend/data/fixtures/extraccion-factura-a-mixta.json` (nuevo); `backend/tests/unit/test_engine.py` (+5), `backend/tests/unit/test_extractor.py` (+5).
+- `frontend/src/domain/types.ts` (+ImpuestoDetalle/detalle_impuestos).
+- Specs: `specs/modules/02-extraccion-ia/04-verification.md` (ADR-02-12), `specs/PROGRESO.md` (estado + esta entrada).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- ADR-02-12 (MOD-02): detalle_impuestos + impuestos calculado en Python + gate de consistencia pre-reintento. El campo nuevo en `datos_extraidos` extiende el contrato de forma aditiva — **aprobado por Kevin** antes de tocar código (protocolo §4); sin cambios de DDL ni de reglas de negocio (R3 intacta, su ecuación ahora compartida). `json_crudo_ia` deja de incluir `impuestos` (es derivado; la trazabilidad del pie queda en `detalle_impuestos`). Costo: una extracción inconsistente puede consumir su 2º intento (+1 llamada) — aceptado.
+
+**Estado exacto al cerrar:**
+- Fix commiteado localmente (`main`); módulos 00–04 🟢 · 05 🟡 (falta deploy T-14..T-16). Servidores de Kevin no tocados (script ad-hoc con SDK directo).
+
+**Próximos pasos para la próxima sesión:**
+1. Kevin re-audita la Factura A mixta real desde la UI en modo `llm` para confirmar el semáforo verde en su flujo normal (el `.env` ya está en `llm`).
+2. Push de `main` (Kevin) → CI en verde → deploy de cierre (T-14..T-16) con `docs/despliegue.md` → `DoD`.
+3. (Opcional, decisión de contrato) Ejemplo del catálogo con alícuotas mixtas/percepción para cubrir el caso desde la demo pública.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- **15 llamadas** `gpt-4o-mini` en las 4 corridas de verificación ad-hoc (mixta ×4: 1+2+2+2 con reintentos del gate incluidos; matriz ×2 corridas: 4+4, el desvío genuino consume su reintento por diseño): ~2k tokens entrada + ~300 salida c/u — **USD ≈ 0.02**.

@@ -195,3 +195,68 @@ class TestFacturaBTransparenciaFiscal:
         resultado = MotorReglas().evaluar(self._factura_b(), ctx)
         assert resultado.estado == "APROBADO"
         assert all(r.aprobado for r in resultado.reglas)
+
+
+class TestFacturaAMixta:
+    """Caso real (ADR-02-12): Factura A con alícuotas mixtas + percepción IIBB.
+
+    El LLM recibía un único campo escalar `impuestos` y sumaba las 3 líneas
+    del pie de memoria: devolvió 94.600 por 145.800 (error aritmético de
+    $51.200) → R3 rechazaba DISCREPANCIA_CONTABLE. Con `detalle_impuestos`
+    (una entrada por línea, extraída literal) y el recálculo en Python, la
+    suma exacta es 75.600 + 46.200 + 24.000 = 145.800 y
+    800.000 (neto) + 145.800 = 945.800 = total. Fixture con fecha estática
+    2026-11-14: caducidad R5 ≈ 2027-01-13 (misma política que ADR-02-06).
+    """
+
+    RUTA = (
+        Path(__file__).resolve().parents[2]
+        / "data"
+        / "fixtures"
+        / "extraccion-factura-a-mixta.json"
+    )
+
+    def _factura_mixta(self) -> FacturaExtraida:
+        datos = json.loads(self.RUTA.read_text(encoding="utf-8"))
+        return FacturaExtraida.model_validate(datos)  # misma validación del extractor
+
+    def test_impuestos_recalculados_desde_detalle(self) -> None:
+        """El fix del bug: aunque el modelo devuelva una suma errónea, Python
+        recalcula `impuestos` como la suma exacta del detalle línea a línea."""
+        datos = json.loads(self.RUTA.read_text(encoding="utf-8"))
+        datos["impuestos"] = 94600.00  # la suma errónea del LLM reportada
+        factura = FacturaExtraida.model_validate(datos)
+        assert factura.impuestos == Decimal("145800.00")
+        assert [(i.concepto, i.monto) for i in factura.detalle_impuestos] == [
+            ("IVA 21%", Decimal("75600.00")),
+            ("IVA 10,5%", Decimal("46200.00")),
+            ("Percepción IIBB ARBA 3,00% (Otros Tributos)", Decimal("24000.00")),
+        ]
+
+    def test_numero_comprobante_con_punto_de_venta(self) -> None:
+        """El PdV no se pierde: '00005-00019384', no solo '00019384'."""
+        assert self._factura_mixta().numero_comprobante == "00005-00019384"
+
+    def test_r3_verde_con_alicuotas_mixtas(self) -> None:
+        """Neto $800.000 + IVA 21% $75.600 + IVA 10,5% $46.200 + Perc. IIBB $24.000 = $945.800."""
+        resultado = R3ConsistenciaMatematica().evaluar(self._factura_mixta(), contexto())
+        assert resultado.aprobado
+        assert resultado.codigo_error is None
+
+    def test_motor_completo_aprobado(self) -> None:
+        """Total $945.800 > $500.000 → R4 exige OC (la fixture la trae)."""
+        austral = Proveedor(cuit="30712345671", razon_social="Comercial Austral SRL", activo=True)
+        ctx = ContextoAuditoria(hoy=date(2026, 11, 14), proveedor=austral)  # fecha del doc
+        resultado = MotorReglas().evaluar(self._factura_mixta(), ctx)
+        assert resultado.estado == "APROBADO"
+        assert all(r.aprobado for r in resultado.reglas)
+
+    def test_sin_detalle_impuestos_conserva_el_literal(self) -> None:
+        """Retrocompatibilidad: sin `detalle_impuestos` (fixtures mock), `impuestos`
+        conserva el valor extraído — el recálculo solo aplica con líneas presentes."""
+        datos = json.loads(self.RUTA.read_text(encoding="utf-8"))
+        datos.pop("detalle_impuestos")
+        datos["impuestos"] = 74130.00  # valor literal de otra extracción
+        factura = FacturaExtraida.model_validate(datos)
+        assert factura.impuestos == Decimal("74130.00")
+        assert factura.detalle_impuestos == []

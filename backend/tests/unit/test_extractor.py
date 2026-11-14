@@ -316,6 +316,10 @@ class TestLLMStructuredExtractor:
         assert len(falso.llamadas) == 1
         assert "reintento" not in falso.llamadas[0]["user"]
         assert falso.llamadas[0]["temperatura"] == 0
+        # ADR-02-12: el esquema enviado al LLM no incluye `impuestos` (se
+        # calcula en Python desde detalle_impuestos; el modelo no suma).
+        assert "impuestos" not in falso.llamadas[0]["esquema_json"]["properties"]
+        assert "detalle_impuestos" in falso.llamadas[0]["esquema_json"]["properties"]
 
     def test_reintenta_una_vez_y_puede_salir_bien(self, monkeypatch, factura_cruda):
         invalido = {"tipo_comprobante": "FACTURA"}  # sin campos obligatorios
@@ -327,6 +331,53 @@ class TestLLMStructuredExtractor:
         assert len(falso.llamadas) == 2  # intento inicial + 1 reintento (RN-2-03)
         assert "OBLIGATORIOS" in falso.llamadas[1]["user"]  # prompt reforzado
         assert resultado.factura.razon_social == "Distribuidora Andina S.A."
+
+    def test_reintenta_por_inconsistencia_aritmetica(self, monkeypatch, factura_cruda):
+        """ADR-02-12: la ecuación de R3 es gate pre-reintento.
+
+        Bug real: el LLM copió 'IVA 10,5%: $ 46.200,00' como 46.000 en una
+        Factura A mixta; Σ items + impuestos ≠ total y R3 rechazaba. Con el
+        gate, el intento inconsistente dispara el reintento (mismo tope de 2
+        llamadas de RN-2-03) y el intento 2 — con la verificación aritmética
+        reforzada — sale consistente.
+        """
+        inconsistente = factura_cruda(monto_total="99999.00")  # válido, pero no cuadra
+        falso = ClienteFalso([inconsistente, factura_cruda()])
+        monkeypatch.setattr(modulo_extractor, "completar_con_esquema", falso)
+
+        resultado = LLMStructuredExtractor("openai", "gpt-test").extraer("texto", "f.pdf")
+
+        assert len(falso.llamadas) == 2
+        assert "IMPORTE TOTAL" in falso.llamadas[1]["user"]  # refuerzo aritmético
+        assert resultado.factura.monto_total == Decimal("25000.00")
+
+    def test_inconsistente_en_ambos_intentos_se_devuelve_para_r3(self, monkeypatch, factura_cruda):
+        """Si ningún intento cuadra, sale el último validado: R3 decide (200 OK).
+
+        La inconsistencia no es fallo de contrato (no hay 502): el semáforo
+        muestra R3 en rojo con los datos tal cual fueron extraídos.
+        """
+        primera = factura_cruda(monto_total="99999.00")
+        segunda = factura_cruda(monto_total="88888.00")
+        falso = ClienteFalso([primera, segunda])
+        monkeypatch.setattr(modulo_extractor, "completar_con_esquema", falso)
+
+        resultado = LLMStructuredExtractor("openai", "gpt-test").extraer("texto", "f.pdf")
+
+        assert len(falso.llamadas) == 2  # sin más reintentos que el tope
+        assert resultado.factura.monto_total == Decimal("88888.00")
+        assert resultado.json_crudo_ia == segunda  # par factura↔crudo del mismo intento
+
+    def test_remito_no_pasa_por_el_gate_aritmetico(self, monkeypatch, factura_cruda):
+        """En REMITO decide R0 antes de cualquier matemática: sin reintento."""
+        crudo = factura_cruda(tipo_comprobante="REMITO", monto_total="99999.00")
+        falso = ClienteFalso([crudo])
+        monkeypatch.setattr(modulo_extractor, "completar_con_esquema", falso)
+
+        resultado = LLMStructuredExtractor("openai", "gpt-test").extraer("texto", "f.pdf")
+
+        assert len(falso.llamadas) == 1  # la inconsistencia no dispara reintento
+        assert resultado.factura.tipo_comprobante == "REMITO"
 
     def test_falla_definitivamente_tras_reintento(self, monkeypatch):
         invalido = {"tipo_comprobante": "FACTURA"}
@@ -480,6 +531,38 @@ class TestEsquemaEstricto:
         letra = esquema["properties"]["letra_comprobante"]
         assert {"type": "null"} in letra["anyOf"]  # patrón probado: string|null
         assert "encabezado" in letra["description"]
+
+    def test_impuestos_no_viaja_al_esquema_del_llm(self):
+        """ADR-02-12: `impuestos` es derivado y se calcula en Python.
+
+        El bug real: el esquema le pedía un escalar `impuestos` al modelo y
+        este sumaba las líneas del pie de memoria (devolvió 94.600 por
+        145.800 en una Factura A con alícuotas mixtas). Fuera del esquema,
+        el error es imposible; el dominio conserva el campo (default 0 y
+        recálculo desde `detalle_impuestos`).
+        """
+        esquema = cliente_llm.preparar_esquema_estricto(modulo_extractor.esquema_para_llm())
+
+        assert "impuestos" not in esquema["properties"]
+        assert "impuestos" not in esquema["required"]
+        # El modelo de dominio lo conserva (default + validador de recálculo).
+        assert "impuestos" in FacturaExtraida.model_json_schema()["properties"]
+
+    def test_detalle_impuestos_y_numero_comprobante_en_esquema(self):
+        """ADR-02-12: detalle línea a línea + numero con Punto de Venta."""
+        esquema = cliente_llm.preparar_esquema_estricto(modulo_extractor.esquema_para_llm())
+
+        detalle = esquema["properties"]["detalle_impuestos"]
+        assert detalle["type"] == "array"
+        assert detalle["items"]["$ref"] == "#/$defs/ImpuestoDetalle"
+        linea = esquema["$defs"]["ImpuestoDetalle"]["properties"]
+        assert linea["concepto"]["type"] == "string"
+        assert linea["monto"]["type"] == "number"
+        assert "NO sumar" in linea["monto"]["description"]
+        assert "27.743" in detalle["description"]  # exclusión del informativo
+        numero = esquema["properties"]["numero_comprobante"]
+        assert {"type": "null"} in numero["anyOf"]
+        assert "00005-00019384" in numero["description"]
 
     def test_conserva_enum_format_y_null_de_opcionales(self):
         esquema = cliente_llm.preparar_esquema_estricto(FacturaExtraida.model_json_schema())

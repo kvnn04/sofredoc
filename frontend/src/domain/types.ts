@@ -18,6 +18,12 @@ export interface ItemFactura {
   subtotal: number;
 }
 
+/** Línea de impuesto discriminada al pie, extraída literal (ADR-02-12). */
+export interface ImpuestoDetalle {
+  concepto: string;
+  monto: number;
+}
+
 /** `FacturaExtraida` serializada por la API dentro de `datos_extraidos`. */
 export interface FacturaExtraida {
   tipo_comprobante: "FACTURA" | "REMITO";
@@ -30,6 +36,8 @@ export interface FacturaExtraida {
   fecha_emision: string;
   numero_orden_compra: string | null;
   items: ItemFactura[];
+  /** Líneas de impuesto al pie una por una; `impuestos` es su suma (ADR-02-12). */
+  detalle_impuestos: ImpuestoDetalle[];
   impuestos: number;
   monto_total: number;
 }

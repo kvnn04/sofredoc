@@ -9,6 +9,18 @@ CODIGO_ERROR = "DISCREPANCIA_CONTABLE"
 TOLERANCIA = Decimal("1.00")
 
 
+def calculo_total(factura: FacturaExtraida) -> Decimal:
+    """Σ(cantidad × precio unitario) + impuestos — la ecuación de R3 (RN-03).
+
+    Fuente única (ADR-02-12): el extractor la reutiliza como gate de
+    consistencia pre-reintento, así el chequeo y la regla nunca divergen.
+    """
+    return (
+        sum((item.cantidad * item.precio_unitario for item in factura.items), Decimal("0.00"))
+        + factura.impuestos
+    )
+
+
 class R3ConsistenciaMatematica:
     """Recalcula el total con Decimal exacto; tolerancia estricta de ± $1.00 ARS."""
 
@@ -16,10 +28,7 @@ class R3ConsistenciaMatematica:
     nombre = "Consistencia matemática"
 
     def evaluar(self, factura: FacturaExtraida, ctx: ContextoAuditoria) -> ReglaResultado:
-        calculado = (
-            sum((item.cantidad * item.precio_unitario for item in factura.items), Decimal("0.00"))
-            + factura.impuestos
-        )
+        calculado = calculo_total(factura)
         if abs(calculado - factura.monto_total) <= TOLERANCIA:
             return ReglaResultado(
                 codigo=self.codigo,
