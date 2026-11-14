@@ -1,0 +1,31 @@
+{
+  "tipo_comprobante": "FACTURA",
+  "letra_comprobante": "B",
+  "numero_comprobante": "00008-00024917",
+  "cuit_emisor": "30-12345678-1",
+  "razon_social": "Distribuidora Andina S.A.",
+  "fecha_emision": "2026-11-13",
+  "numero_orden_compra": "OC-2026-04712",
+  "items": [
+    {
+      "descripcion": "Estación de energía portátil LiFePO4 1024Wh respaldo UPS equipamiento médico",
+      "cantidad": 1,
+      "precio_unitario": 340000.00,
+      "subtotal": 340000.00
+    },
+    {
+      "descripcion": "Kit conectividad satelital empresarial + soporte de montaje exterior",
+      "cantidad": 1,
+      "precio_unitario": 185000.00,
+      "subtotal": 185000.00
+    },
+    {
+      "descripcion": "Switch PoE+ Gigabit 8 puertos administrable para rack de comunicaciones",
+      "cantidad": 2,
+      "precio_unitario": 47500.00,
+      "subtotal": 95000.00
+    }
+  ],
+  "impuestos": 0.00,
+  "monto_total": 620000.00
+}

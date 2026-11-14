@@ -6,11 +6,11 @@
 
 ## Estado actual (resumen rápido)
 
-- **Fase del proyecto:** MOD-00..MOD-05 en lo esencial: MOD-00..MOD-04 completos (MOD-04 con DoD 5/5 tras automatizar su checklist en el E2E) + **MOD-05 QA completo (T-01..T-13 + T-06-bis + T-10-bis)**: gate de cobertura, E2E Playwright (**10 escenarios** × 2 pasadas verdes — ADR-05-08), k6 saturación (50 VUs) y funcional en verde, workflow CI (actions v7), README+capturas. Post-QA: **ADR-02-10** (2026-11-13): extracción de Factura A con IVA discriminado (`impuestos` = suma de TODOS los impuestos al pie; subtotales netos vs 'Subtotal c/IVA') verificado con LLM real **4/4** — suite en **115 passed** (99.59%). Falta el **deploy de cierre (T-14..T-16)**.
+- **Fase del proyecto:** MOD-00..MOD-05 en lo esencial: MOD-00..MOD-04 completos (MOD-04 con DoD 5/5 tras automatizar su checklist en el E2E) + **MOD-05 QA completo (T-01..T-13 + T-06-bis + T-10-bis)**: gate de cobertura, E2E Playwright (**10 escenarios** × 2 pasadas verdes — ADR-05-08), k6 saturación (50 VUs) y funcional en verde, workflow CI (actions v7), README+capturas. Post-QA: **ADR-02-10** (Factura A con IVA discriminado) y **ADR-02-11** (letra + Ley 27.743 en B/C), ambos verificados con LLM real (4/4 y 5/5) — suite en **119 passed** (99.59%). Falta el **deploy de cierre (T-14..T-16)**.
 - **Git:** ramas unificadas el 13/11 — `main` (ex-`master` renombrada, con merge fast-forward de `pruebaFront`) contiene todo el historial (MOD-00..MOD-05 Fase 4-bis, hasta `6db502d`); `remote origin` = https://github.com/kvnn04/sofredoc.git (orden de push explícita de Kevin; **la ejecución del push la hace Kevin**). `pruebaFront` queda apuntando al mismo commit (borrable).
-- **Siguiente acción concreta:** (1) push de `main` a GitHub (lo ejecuta Kevin; incluye fixes de CI `b5c86ea`/`4824846`/`d2c1735` y el fix ADR-02-10 `1591eda` + refresh de docs; el CI corre solo al pushear) → (2) deploy Render + Vercel siguiendo `docs/despliegue.md` (15–20 min) → (3) DoD global (`DoD`).
+- **Siguiente acción concreta:** (1) push de `main` a GitHub (lo ejecuta Kevin; incluye fixes de CI `b5c86ea`/`4824846`/`d2c1735`, los fixes de extracción ADR-02-10 `1591eda` y ADR-02-11 + docs; el CI corre solo al pushear) → (2) deploy Render + Vercel siguiendo `docs/despliegue.md` (15–20 min) → (3) DoD global (`DoD`).
 - **Módulos:** 00 🟢 · 01 🟢 · 02 🟢 · 03 🟢 · 04 🟢 · 05 🟡 (QA 100%, deploy pendiente).
-- **Bloqueos:** deploy = plataformas de Kevin (repo en GitHub + Render + Vercel). *Verificación con LLM real completada (2026-11-13): matriz de verdad en verde (APROBADO / R3 / R4), `PDF_SIN_TEXTO` sin créditos — ADR-02-08 (fix Decimal del esquema strict) y ADR-02-09 (p95 > 8 s por outliers del proveedor) — y **Factura A real con IVA discriminado → APROBADO** tras ADR-02-10 (`impuestos` = IVA $74.130, R3 OK). Falta solo la pasada visual de la UI con `EXTRACTOR_MODE=llm` (Kevin; **ojo: el `backend/.env` quedó en `mock`** — cambiar la línea `EXTRACTOR_MODE` y reiniciar).*
+- **Bloqueos:** deploy = plataformas de Kevin (repo en GitHub + Render + Vercel). *Verificación con LLM real completada (2026-11-13/14): matriz de verdad en verde, `PDF_SIN_TEXTO` sin créditos, **Factura A real con IVA discriminado → APROBADO** (ADR-02-10) y **Factura B real con recuado Ley 27.743 → APROBADO** (ADR-02-11, `impuestos = 0`, letra B extraída). Falta solo la pasada visual de la UI con `EXTRACTOR_MODE=llm` (Kevin; **ojo: el `backend/.env` quedó en `mock`** — cambiar la línea `EXTRACTOR_MODE` y reiniciar).*
 - **Configuración del usuario (Kevin):** autonomía completa (tests, deps, archivos, commit local, LLM real, push/deploy) · verificación completa obligatoria · desvío menor → ADR y seguir; desvío de contrato/esquema/regla → preguntar · commits por fase.
 - **Protocolo de sesión (misión implícita en AGENTS.md §3):** Kevin escribe una palabra y el agente ya sabe qué hacer — `arrancá` = módulo pendiente completo (anuncia y ejecuta, sin esperar confirmación) · `MOD-XX` / `MOD-XX Fase N` = override · `prueba` = solo próxima fase · `estado` = resumen · `todo` = continuo hasta el final · `DoD` = revisión final. Al cerrar un módulo: bitácora + estado 🟢 en specs/README.md + **esperar al usuario** (no continuar al siguiente módulo por su cuenta).
 
@@ -538,3 +538,41 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - 4 llamadas `gpt-4o-mini` (todas en intento 1, sin reintentos): ~2k tokens entrada + ~250 salida c/u — **USD ≈ 0.002**.
+
+### [2026-11-14] Sesión 15 — Fix extractor: Factura B con Transparencia Fiscal Ley 27.743 (ADR-02-11)
+
+**Qué se hizo:**
+- Kevin reporta el 2º falso positivo con `EXTRACTOR_MODE=llm`: Factura B real (ítems $340.000 + $185.000 + $95.000 = $620.000 con IVA incluido, total $620.000) con el recuado obligatorio 'IVA Contenido (Ley 27.743): $107.603,31' → el LLM cargaba `impuestos = 107603.31` → R3 calculaba 620.000 + 107.603,31 ≠ 620.000 → DISCREPANCIA_CONTABLE. El recuado de Transparencia Fiscal es un desglose informativo ya incluido en el total, no un tributo adicionado.
+- Fix **solo de extracción semántica** (R3 y su fórmula intactos):
+  - `domain/models.py`: campo opcional `letra_comprobante: str | None` (ancla: letra del encabezado, null en REMITO; patrón string|null ya probado en strict — enum dentro de anyOf era riesgo innecesario) + descripciones reescritas por letra: `items[].subtotal` / `precio_unitario` (A: netos; B/C: importe final con IVA incluido; el IVA Contenido ya está dentro del subtotal) e `impuestos` (A: impuestos discriminados adicionados; B/C: 0 salvo percepciones adicionales; NO cargar 'IVA Contenido' / 'Otros Impuestos Nacionales Indirectos' de Ley 27.743).
+  - `prompt.py`: SYSTEM_PROMPT reestructurado con ANCLA por letra (extraer letra primero define cómo leer montos) + regla explícita de ignorar desgloses Ley 27.743 + reintento reforzado (regla B/C).
+  - `frontend/src/domain/types.ts`: espejo con `letra_comprobante: string | null` (build ✓).
+- Fixture `data/fixtures/extraccion-factura-b-transparencia.json` (datos reales: letra B, 3 ítems finales, impuestos 0, total 620.000, OC-2026-04712 — R4 exige OC por total > $500.000 y la trae; fecha estática 2026-11-13, caducidad R5 ≈ 2027-01-12) + 4 tests nuevos (1 de esquema + 3 de dominio/motor).
+
+**Verificación ejecutada (evidencia real):**
+- `pytest tests -q --cov=src --cov-fail-under=95` → **119 passed** (+4), cobertura total **99.59%** (`domain/` 100%, gate ok).
+- `ruff check backend` → All checks passed · `ruff format --check backend` → 58 files already formatted.
+- `npm.cmd run build` (frontend) → **✓ built in 10.10 s** (tsc strict con el espejo nuevo).
+- **LLM real** (script ad-hoc, SDK directo con key del `.env`; servidor y `.env` intactos): **5/5 casos** —
+  - Factura B real → `letra=B | items 620.000 + impuestos 0 = total 620.000` → **APROBADO, R3 OK** (intento 1, 6,6 s) — *el IVA Contenido $107.603,31 quedó ignorado*.
+  - Factura A real (regresión post-rewrites del prompt) → `letra=A | impuestos 74.130` → **APROBADO** (3,8 s).
+  - Matriz de verdad intacta: aprobada → APROBADO (2,0 s) · desvío → RECHAZADO R3 (2,5 s) · monto-alto → RECHAZADO R4 (2,2 s).
+  - `letra_comprobante` extraída correctamente en los 5 casos; 0 reintentos.
+
+**Archivos creados/modificados clave:**
+- `backend/src/domain/models.py` (letra_comprobante + descripciones por letra), `backend/src/infrastructure/llm/prompt.py` (SYSTEM_PROMPT + reintento), `backend/data/fixtures/extraccion-factura-b-transparencia.json` (nuevo), `backend/tests/unit/test_engine.py` (+3), `backend/tests/unit/test_extractor.py` (+1), `frontend/src/domain/types.ts` (+letra).
+- Specs: `specs/modules/02-extraccion-ia/04-verification.md` (ADR-02-11), `specs/PROGRESO.md` (estado + esta entrada), `specs/README.md` (pytest 119), `README.md` (tabla de calidad 119 / 26.67 s).
+
+**Decisiones / ADRs nuevos (si los hay):**
+- ADR-02-11 (MOD-02): letra_comprobante + Ley 27.743. Menor: no cambia contrato API (campo opcional dentro de `datos_extraidos`), esquema de BD ni reglas de negocio (R3 intacto; ninguna regla consume la letra — es ancla de extracción + trazabilidad en el JSON inspector).
+
+**Estado exacto al cerrar:**
+- Fix commiteado localmente (`main`); backend detenido (Kevin lo levanta). Módulos 00–04 🟢 · 05 🟡 (falta deploy T-14..T-16).
+
+**Próximos pasos para la próxima sesión:**
+1. Push de `main` (Kevin) → CI en verde → deploy de cierre (T-14..T-16) con `docs/despliegue.md` → `DoD`.
+2. Pasada visual de la UI con `EXTRACTOR_MODE=llm` (flip del `.env` + reinicio) re-auditando la Factura A y la Factura B reales.
+3. (Opcional, decisión de contrato) Ejemplos del catálogo con IVA discriminado / Ley 27.743 para cubrir ambos casos borde desde la demo pública.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- 5 llamadas `gpt-4o-mini` (todas en intento 1): ~2k tokens entrada + ~250 salida c/u — **USD ≈ 0.003**.

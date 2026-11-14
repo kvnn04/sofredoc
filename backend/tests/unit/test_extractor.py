@@ -467,6 +467,20 @@ class TestEsquemaEstricto:
         assert "Subtotal Neto" in item["subtotal"]["description"]
         assert "Subtotal c/IVA" in item["subtotal"]["description"]
 
+    def test_descripciones_transparencia_27743_y_letra(self):
+        """ADR-02-11: regla B/C (IVA incluido) + ancla letra_comprobante en el esquema."""
+        esquema = cliente_llm.preparar_esquema_estricto(FacturaExtraida.model_json_schema())
+
+        impuestos = esquema["properties"]["impuestos"]["description"]
+        assert "27.743" in impuestos
+        assert "INCLUIDO" in impuestos
+        assert "Factura B o C" in impuestos
+        item = esquema["$defs"]["ItemFactura"]["properties"]
+        assert "letra_comprobante" in item["subtotal"]["description"]
+        letra = esquema["properties"]["letra_comprobante"]
+        assert {"type": "null"} in letra["anyOf"]  # patrón probado: string|null
+        assert "encabezado" in letra["description"]
+
     def test_conserva_enum_format_y_null_de_opcionales(self):
         esquema = cliente_llm.preparar_esquema_estricto(FacturaExtraida.model_json_schema())
         propiedades = esquema["properties"]

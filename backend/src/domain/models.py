@@ -10,8 +10,9 @@ from pydantic import BaseModel, Field
 class ItemFactura(BaseModel):
     """Ítem de la factura tal como fue extraído (la IA no corrige datos).
 
-    Las `description` viajan al JSON Schema strict del proveedor (ADR-02-10):
-    definen la semántica AFIP que el LLM no puede inferir de nombres genéricos.
+    Las `description` viajan al JSON Schema strict del proveedor
+    (ADR-02-10/11): definen la semántica AFIP/ARCA que el LLM no puede inferir
+    de nombres genéricos.
     """
 
     descripcion: str = Field(
@@ -25,17 +26,22 @@ class ItemFactura(BaseModel):
     precio_unitario: Decimal = Field(
         ge=0,
         description=(
-            "Precio unitario SIN IVA de la línea si el comprobante discrimina IVA "
-            "(Factura A); precio unitario final de la línea si no lo discrimina "
-            "(Factura B o C)."
+            "Precio unitario según la letra del comprobante (ver "
+            "letra_comprobante): en Factura A (IVA discriminado) es el precio "
+            "SIN IVA; en Factura B o C es el precio final de la línea con IVA "
+            "incluido."
         ),
     )
     subtotal: Decimal = Field(
         ge=0,
         description=(
-            "Subtotal de la línea SIN IVA si el comprobante discrimina IVA "
-            "(Factura A: usar la columna 'Subtotal Neto', NUNCA 'Subtotal c/IVA'); "
-            "importe total de la línea si no discrimina IVA (Factura B o C)."
+            "Subtotal de la línea según la letra del comprobante (ver "
+            "letra_comprobante): en Factura A (IVA discriminado) es el valor "
+            "neto SIN IVA (columna 'Subtotal Neto', NUNCA 'Subtotal c/IVA'); en "
+            "Factura B o C es el importe final de la línea con IVA incluido. Si "
+            "el comprobante informa el recuado de Transparencia Fiscal (Ley "
+            "27.743, 'IVA Contenido'), ese IVA ya está dentro de este subtotal: "
+            "no restarlo ni sumarlo."
         ),
     )
 
@@ -44,6 +50,16 @@ class FacturaExtraida(BaseModel):
     """Comprobante estructurado producido por la extracción (MOD-02)."""
 
     tipo_comprobante: Literal["FACTURA", "REMITO"]
+    letra_comprobante: str | None = Field(
+        default=None,
+        description=(
+            "Letra del comprobante fiscal según el encabezado, como letra "
+            "mayúscula sola ('A', 'B', 'C' o la que corresponda, p. ej. 'M'); "
+            "null para REMITO o si no se indica letra. Extraerla primero: define "
+            "si los ítems son netos (A) o con IVA incluido (B, C) y qué impuestos "
+            "se adicionan."
+        ),
+    )
     numero_comprobante: str | None = None
     cuit_emisor: str  # se normaliza y valida con el VO CUIT en las reglas
     razon_social: str = Field(min_length=1)
@@ -53,12 +69,22 @@ class FacturaExtraida(BaseModel):
     impuestos: Decimal = Field(
         default=Decimal("0.00"),
         description=(
-            "Suma de TODOS los impuestos discriminados al pie del comprobante "
-            "(IVA 21% + IVA 10,5% + IVA 27% + impuestos internos + percepciones + "
-            "'Importe Otros Tributos'), no únicamente esa última fila. En una "
-            "Factura A con IVA discriminado NUNCA es 0 si el pie informa un monto "
-            "de IVA: usar ese monto. Solo es 0 si el comprobante no discrimina "
-            "impuestos (Factura B o C)."
+            "Impuestos que se ADICIONAN a los subtotales de los ítems para "
+            "llegar al total (la ecuación es: suma de ítems + impuestos = "
+            "total). Según la letra del comprobante (ver letra_comprobante): "
+            "- Factura A (IVA discriminado): suma de TODOS los impuestos "
+            "discriminados al pie (IVA 21% + IVA 10,5% + IVA 27% + impuestos "
+            "internos + percepciones + 'Importe Otros Tributos'), no únicamente "
+            "esa última fila; NUNCA es 0 si el pie informa un monto de IVA. "
+            "- Factura B o C (IVA incluido en el precio): 0 si entre los "
+            "subtotales y el total no se suma nada. NO cargar aquí el recuado "
+            "informativo del Régimen de Transparencia Fiscal al Consumidor (Ley "
+            "27.743) — 'IVA Contenido' / 'IVA Contenido (incluido en el precio "
+            "final)' / 'Otros Impuestos Nacionales Indirectos' — porque ya está "
+            "INCLUIDO en el total y en los subtotales de los ítems (no se "
+            "adiciona). Solo sumar percepciones u otros tributos que figuren "
+            "como línea adicional entre los subtotales y el total (p. ej. "
+            "'Percepciones / Otros Tributos' mayor a 0)."
         ),
     )
     monto_total: Decimal = Field(

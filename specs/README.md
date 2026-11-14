@@ -15,7 +15,7 @@ Bienvenido a la **fuente única de verdad** del proyecto **SofreDoc Validator**.
 | `MOD-02` | Ingesta PDF y Extracción IA | 🟢 Completado | [01](./modules/02-extraccion-ia/01-spec.md) | [02](./modules/02-extraccion-ia/02-design.md) | [03](./modules/02-extraccion-ia/03-tasks.md) | [04](./modules/02-extraccion-ia/04-verification.md) |
 | `MOD-03` | API REST y SQLite | 🟢 Completado | [01](./modules/03-api-sqlite/01-spec.md) | [02](./modules/03-api-sqlite/02-design.md) | [03](./modules/03-api-sqlite/03-tasks.md) | [04](./modules/03-api-sqlite/04-verification.md) |
 | `MOD-04` | Frontend Clean Architecture | 🟢 Completado | [01](./modules/04-frontend/01-spec.md) | [02](./modules/04-frontend/02-design.md) | [03](./modules/04-frontend/03-tasks.md) | [04](./modules/04-frontend/04-verification.md) |
-| `MOD-05` | QA: Pytest, Playwright & k6 | 🟡 En Progreso *(QA completo: pytest 115 + E2E 10 escenarios + k6 saturación y funcional; falta deploy de cierre T-14..T-16)* | [01](./modules/05-qa-testing/01-spec.md) | [02](./modules/05-qa-testing/02-design.md) | [03](./modules/05-qa-testing/03-tasks.md) | [04](./modules/05-qa-testing/04-verification.md) |
+| `MOD-05` | QA: Pytest, Playwright & k6 | 🟡 En Progreso *(QA completo: pytest 119 + E2E 10 escenarios + k6 saturación y funcional; falta deploy de cierre T-14..T-16)* | [01](./modules/05-qa-testing/01-spec.md) | [02](./modules/05-qa-testing/02-design.md) | [03](./modules/05-qa-testing/03-tasks.md) | [04](./modules/05-qa-testing/04-verification.md) |
 
 *Leyenda de Estado: ⚪ Pendiente | 🟡 En Progreso | 🟢 Completado | 🔴 Bloqueado*
 

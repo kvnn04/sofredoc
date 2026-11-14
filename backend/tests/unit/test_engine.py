@@ -150,3 +150,48 @@ class TestFacturaAConIvaDiscriminado:
         resultado = MotorReglas().evaluar(self._factura_a(), contexto(austral))
         assert resultado.estado == "APROBADO"
         assert all(r.aprobado for r in resultado.reglas)
+
+
+class TestFacturaBTransparenciaFiscal:
+    """Caso real (ADR-02-11): Factura B con recuado informativo Ley 27.743.
+
+    El extractor LLM cargaba `impuestos = 107603.31` desde 'IVA Contenido
+    (Ley 27.743)' — un desglose informativo YA INCLUIDO en el total y en los
+    subtotales — y R3 rechazaba: 620.000 + 107.603,31 ≠ 620.000. Con la regla
+    corregida (en B/C `impuestos = 0` salvo tributos que se adicionen), la
+    auditoría queda APROBADO: ítems 620.000 (IVA incluido) + 0 = total
+    620.000. Fixture con fecha estática 2026-11-13: caducidad R5
+    ≈ 2027-01-12 (misma política que ADR-02-06).
+    """
+
+    RUTA = (
+        Path(__file__).resolve().parents[2]
+        / "data"
+        / "fixtures"
+        / "extraccion-factura-b-transparencia.json"
+    )
+
+    def _factura_b(self) -> FacturaExtraida:
+        datos = json.loads(self.RUTA.read_text(encoding="utf-8"))
+        return FacturaExtraida.model_validate(datos)  # misma validación del extractor
+
+    def test_fixture_valida_contra_esquema(self) -> None:
+        factura = self._factura_b()
+        assert factura.letra_comprobante == "B"
+        assert factura.impuestos == Decimal("0.00")  # IVA Contenido 27.743 ignorado
+        assert factura.monto_total == Decimal("620000.00")
+        suma_items = sum((i.subtotal for i in factura.items), Decimal("0.00"))
+        assert suma_items == Decimal("620000.00")
+
+    def test_r3_verde_con_iva_contenido_ignorado(self) -> None:
+        """El fix del bug: R3 pasa aunque el comprobante informe 'IVA Contenido'."""
+        resultado = R3ConsistenciaMatematica().evaluar(self._factura_b(), contexto())
+        assert resultado.aprobado
+        assert resultado.codigo_error is None
+
+    def test_motor_completo_aprobado(self) -> None:
+        """Total > $500.000 → R4 exige OC (la fixture la trae: OC-2026-04712)."""
+        ctx = ContextoAuditoria(hoy=date(2026, 11, 13), proveedor=ACTIVO)  # fecha del doc
+        resultado = MotorReglas().evaluar(self._factura_b(), ctx)
+        assert resultado.estado == "APROBADO"
+        assert all(r.aprobado for r in resultado.reglas)

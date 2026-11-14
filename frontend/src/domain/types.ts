@@ -21,6 +21,8 @@ export interface ItemFactura {
 /** `FacturaExtraida` serializada por la API dentro de `datos_extraidos`. */
 export interface FacturaExtraida {
   tipo_comprobante: "FACTURA" | "REMITO";
+  /** Letra del comprobante fiscal (A/B/C/…); null en REMITO (ADR-02-11). */
+  letra_comprobante: string | null;
   numero_comprobante: string | null;
   cuit_emisor: string;
   razon_social: string;
