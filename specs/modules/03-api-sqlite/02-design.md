@@ -112,13 +112,17 @@ class ResultadoAuditoriaDTO(BaseModel):
   "nombre_archivo": "factura-aprobada-001.pdf",
   "datos_extraidos": {
     "tipo_comprobante": "FACTURA",
-    "numero_comprobante": "A-0001-00000123",
+    "letra_comprobante": "A",
+    "numero_comprobante": "00001-00000123",
     "cuit_emisor": "30-12345678-1",
     "razon_social": "Distribuidora Andina S.A.",
     "fecha_emision": "2026-11-07",
     "numero_orden_compra": "OC-2026-0441",
     "items": [
       { "descripcion": "Servicio de instalación torre 4G", "cantidad": 2, "precio_unitario": 175000.00, "subtotal": 350000.00 }
+    ],
+    "detalle_impuestos": [
+      { "concepto": "Impuestos", "monto": 34000.00 }
     ],
     "impuestos": 34000.00,
     "monto_total": 384000.00

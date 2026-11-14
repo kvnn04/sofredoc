@@ -26,13 +26,15 @@ Este módulo resuelve la transformación usando **IA únicamente como extracció
 - **RN-2-05:** El modo `mock` es determinista: ante la misma entrada devuelve siempre la misma salida de fixture y no consume créditos.
 - **RN-2-06:** El extractor nunca ejecuta validaciones de negocio (eso es MOD-01): solo extrae datos literales del documento.
 - **RN-2-07:** Límite de **10 páginas** por comprobante: pypdf concatena el texto de todas las páginas (tabla de ítems continuada); un PDF que supere las 10 páginas produce `PDF_INVALIDO` con mensaje específico de límite de páginas.
+- **RN-2-08 (ADR-02-12):** El LLM extrae cada línea de impuesto del pie de forma literal en `detalle_impuestos` (`concepto` + `monto`, una entrada por línea); el campo `impuestos` **no viaja al LLM** — el sistema lo calcula en Python sumando el detalle con `Decimal` (la aritmética mental del modelo producía errores como 94.600 por 145.800). Exclusiones semánticas: los desgloses informativos de Ley 27.743 ('IVA Contenido') nunca se cargan, y un tributo que figure en una tabla de desglose Y también en la línea agregada 'Importe Otros Tributos' se carga UNA sola vez.
+- **RN-2-09 (ADR-02-12):** La extracción con LLM se verifica aritméticamente en Python antes de devolverse — la MISMA ecuación de R3 (Σ(cantidad × precio) + impuestos == total ± $1.00, solo FACTURA; en REMITO decide R0). Si no cuadra, se reintenta 1 vez con refuerzo aritmético en el prompt (RN-2-03 conserva el tope de 2 llamadas); si ningún intento cuadra, se devuelve el último validado y el semáforo muestra R3 en rojo (RECHAZADO = 200 OK). Nunca se corrigen los datos extraídos.
 
 ## 4. Casos de Uso (Given-When-Then)
 
 ### CU-01: Extracción exitosa de factura digital
 - **Given** un PDF digital de factura con capa de texto y hasta 5 MB
 - **When** el sistema extrae el texto y lo procesa con Structured Outputs
-- **Then** se obtiene una `FacturaExtraida` completa (tipo, número, CUIT, razón social, fecha, OC opcional, ítems, impuestos, total) y el JSON crudo queda disponible para trazabilidad.
+- **Then** se obtiene una `FacturaExtraida` completa (tipo, letra, número con Punto de Venta, CUIT, razón social, fecha, OC opcional, ítems, detalle_impuestos, impuestos, total) y el JSON crudo queda disponible para trazabilidad.
 
 ### CU-02: PDF escaneado sin capa de texto
 - **Given** un PDF generado a partir de imágenes (sin texto embebido)
@@ -48,6 +50,11 @@ Este módulo resuelve la transformación usando **IA únicamente como extracció
 - **Given** `EXTRACTOR_MODE=mock` en la configuración
 - **When** cualquier fluido de auditoría solicita una extracción
 - **Then** el `MockExtractor` devuelve la extracción del fixture en < 10 ms, sin red, y el flujo completo (reglas + API + frontend) queda demostrable sin IA.
+
+### CU-05: Extracción aritméticamente inconsistente (ADR-02-12)
+- **Given** un PDF cuyo LLM copia mal un monto del pie (caso real: 'IVA 10,5%: $ 46.200,00' devuelto como 46.000, sobre una capa de texto limpia)
+- **When** Pydantic valida la respuesta pero Σ(cantidad × precio) + impuestos ≠ total ± $1.00
+- **Then** el extractor reintenta 1 vez con verificación aritmética reforzada en el prompt; si el intento 2 cuadra se devuelve esa extracción; si tampoco cuadra se devuelve el último intento validado y el semáforo muestra R3 en rojo (`DISCREPANCIA_CONTABLE`, 200 OK) — nunca se corrigen los datos.
 
 ## 5. Fuera de Alcance (Out of Scope)
 

@@ -17,7 +17,7 @@
 
 - [x] **T-06:** Implementar `backend/src/infrastructure/llm/client.py`: envuelve el SDK del proveedor configurado (`LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`) y fuerza Structured Outputs con el JSON Schema de `FacturaExtraida` (temperature 0).
 - [x] **T-07:** Escribir `backend/src/infrastructure/llm/prompt.py` con `SYSTEM_PROMPT` y `build_user_prompt()` según `02-design.md` §5 (valores literales, no calcular ni corregir; campos obligatorios explícitos).
-- [x] **T-08:** Implementar `LLMStructuredExtractor` con 1 reintento sobre ValidationError, logging de latencia y conservación del `json_crudo_ia` (RN-2-03 / RN-2-04).
+- [x] **T-08:** Implementar `LLMStructuredExtractor` con 1 reintento sobre ValidationError, logging de latencia y conservación del `json_crudo_ia` (RN-2-03 / RN-2-04). *(Ampliado por ADR-02-12: también reintenta por inconsistencia aritmética — gate con la ecuación de R3 (RN-2-09) — y envía el esquema sin `impuestos` vía `esquema_para_llm()`.)*
 - [x] **T-09:** Implementar la fábrica de extractor en `backend/src/infrastructure/llm/factory.py`: devuelve `MockExtractor` si `EXTRACTOR_MODE=mock`, `LLMStructuredExtractor` si `llm` (error de arranque claro si `llm` sin `LLM_API_KEY`).
 
 ## Fase 4: Tests Unitarios

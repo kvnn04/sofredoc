@@ -43,15 +43,22 @@ class ItemFactura(BaseModel):
     precio_unitario: Decimal = Field(ge=0)
     subtotal: Decimal = Field(ge=0)
 
+class ImpuestoDetalle(BaseModel):
+    """Línea de impuesto discriminada al pie, extraída LITERAL (ADR-02-12)."""
+    concepto: str = Field(min_length=1)               # ej. 'IVA 21%', 'Percepción IIBB ARBA 3,00%'
+    monto: Decimal = Field(ge=0)                      # de ESA línea sola; el sistema suma
+
 class FacturaExtraida(BaseModel):
     tipo_comprobante: Literal["FACTURA", "REMITO"]
-    numero_comprobante: Optional[str] = None
+    letra_comprobante: Optional[str] = None           # ADR-02-11: ancla de extracción ('A'/'B'/'C'/…)
+    numero_comprobante: Optional[str] = None          # ADR-02-12: 'PPPPP-NNNNNNNN' (Punto de Venta + Comp. Nro)
     cuit_emisor: str                                  # normalizado por el VO CUIT en las reglas
     razon_social: str = Field(min_length=1)
     fecha_emision: date
     numero_orden_compra: Optional[str] = None
     items: list[ItemFactura] = Field(min_length=1)
-    impuestos: Decimal = Decimal("0.00")
+    detalle_impuestos: list[ImpuestoDetalle] = []     # ADR-02-12: cada línea del pie, una entrada
+    impuestos: Decimal = Decimal("0.00")              # DERIVADO: validador recalcula Σ detalle_impuestos
     monto_total: Decimal = Field(gt=0)
 
 class ReglaResultado(BaseModel):
@@ -73,6 +80,8 @@ class ResultadoAuditoria(BaseModel):
 ```
 
 > **Nota de dinero:** el dominio usa `Decimal` (exactitud contable). La serialización a JSON (capa presentación, MOD-03) convierte montos a número con 2 decimales.
+
+> **ADR-02-12 (`impuestos` derivado):** un `model_validator` de `FacturaExtraida` recalcula `impuestos = Σ detalle_impuestos` cuando el detalle trae líneas (la IA extrae cada línea literal, el sistema suma con `Decimal`); sin detalle (fixtures del modo mock) conserva el valor literal. El JSON Schema que viaja al LLM (MOD-02) excluye `impuestos` — el modelo no hace aritmética — y sí incluye `letra_comprobante` como ancla de extracción.
 
 ### Value Object CUIT — Algoritmo Módulo 11 (R1)
 

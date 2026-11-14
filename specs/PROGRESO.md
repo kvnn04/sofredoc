@@ -613,3 +613,37 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - **15 llamadas** `gpt-4o-mini` en las 4 corridas de verificación ad-hoc (mixta ×4: 1+2+2+2 con reintentos del gate incluidos; matriz ×2 corridas: 4+4, el desvío genuino consume su reintento por diseño): ~2k tokens entrada + ~300 salida c/u — **USD ≈ 0.02**.
+
+### [2026-11-14] Sesión 17 — Refresh de documentación completa post ADR-02-12 (solicitud de Kevin)
+
+**Qué se hizo:**
+- Kevin pidió actualizar toda la documentación y ajustar las specs donde hiciera falta ("tiene que estar todo al día") para poder pushear.
+- **Specs sincronizadas con el código real (sancionado por Kevin):**
+  - `01-motor-reglas/02-design.md`: bloque de modelos actualizado — `ImpuestoDetalle` nuevo, `letra_comprobante` (ADR-02-11), `numero_comprobante` formato 'PPPPP-NNNNNNNN', `detalle_impuestos` + nota ADR-02-12 (`impuestos` derivado, esquema del LLM sin ese campo).
+  - `02-extraccion-ia/01-spec.md`: RN-2-08 nueva (detalle_impuestos literal + impuestos calculado en Python + exclusiones semánticas Ley 27.743 y no-duplicación), RN-2-09 nueva (gate de consistencia pre-reintento con la ecuación de R3), CU-01 actualizado (letra, número con PdV, detalle_impuestos) y CU-05 nuevo (extracción inconsistente → reintento → R3 decide, 200 OK).
+  - `02-extraccion-ia/02-design.md`: pipeline ASCII con el gate y el esquema sin `impuestos`, esqueleto del adapter reescrito a la esencia real (`esquema_para_llm` + `_consistente` + `ultima_valida`), prompt esencial reescrito (ancla letra, detalle línea a línea, no-duplicación, numero con PdV) y nota §2 ampliada.
+  - `02-extraccion-ia/03-tasks.md`: T-08 anotada con la ampliación ADR-02-12 (referencia, no reescritura histórica).
+  - `03-api-sqlite/02-design.md`: ejemplo de `POST /auditar` con `letra_comprobante`, `numero_comprobante` '00001-00000123' y `detalle_impuestos`.
+  - `04-frontend/02-design.md`: espejo de tipos sincronizado al contrato real (`ImpuestoDetalle`, `letra_comprobante`, `detalle_impuestos`, `ReglaResultado` con R0 y `detalles` — ADR-04-05) y descripción de TablaDatos con la suma de detalle.
+- **Docs raíz:** `README.md` (tabla de calidad: pytest 129 / 8.29 s / cobertura 99.61% — evidencia fresca de esta sesión), `specs/README.md` (nota de MOD-05: pytest 129), `AGENTS.md` §6 decisión 1 (reintento extendido por ADR-02-12 + impuestos calculado en Python).
+- Intactos por diseño: historial de `specs/PROGRESO.md` (trazabilidad), `CLAUDE.md` (puntero), `qa/README.md` (E2E/k6 sin cambios — el modo mock es inmune), `docs/despliegue.md` (sin referencias afectadas), `frontend/README.md` (boilerplate).
+
+**Verificación ejecutada (evidencia real):**
+- `pytest tests -q --cov=src --cov-fail-under=95` → **129 passed en 8.29 s**, cobertura total **99.61%** (dominio 100%) — sin cambios de código en esta sesión.
+- Barrido con grep: cero referencias viejas a "pytest 119", "99.59" o `impuestos` como campo escalar del schema del LLM en docs vivas (solo quedan en el historial de la bitácora y los ADRs, que describen el estado de cada fecha).
+
+**Archivos creados/modificados clave:**
+- `AGENTS.md`, `README.md`, `specs/README.md`, `specs/PROGRESO.md` (esta entrada), `specs/modules/01-motor-reglas/02-design.md`, `specs/modules/02-extraccion-ia/{01-spec,02-design,03-tasks}.md`, `specs/modules/03-api-sqlite/02-design.md`, `specs/modules/04-frontend/02-design.md`.
+
+**Decisiones / ADRs nuevos (si los hay):**
+- Ninguno: sincronización de documentación con el comportamiento ya aprobado en ADR-02-12 (Kevin ordenó el refresh y el push). No cambia contrato, esquema ni reglas — solo refleja lo implementado.
+
+**Estado exacto al cerrar:**
+- Docs al día en `main` con este commit; módulos 00–04 🟢 · 05 🟡 (falta deploy T-14..T-16). Pendiente: push de `main` (lo ejecuta Kevin) → CI en verde → deploy → `DoD`.
+
+**Próximos pasos para la próxima sesión:**
+1. Push de `main` (Kevin) → CI en verde → deploy de cierre (T-14..T-16) con `docs/despliegue.md` → MOD-05 🟢 → revisión final global (`DoD`).
+2. (Opcional, decisión de contrato) Ejemplo del catálogo con alícuotas mixtas/percepción.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Sin llamadas LLM (solo documentación).

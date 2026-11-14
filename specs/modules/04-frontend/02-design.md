@@ -41,24 +41,33 @@ export interface ItemFactura {
   subtotal: number;
 }
 
+/** Línea de impuesto discriminada al pie (ADR-02-12). */
+export interface ImpuestoDetalle {
+  concepto: string;
+  monto: number;
+}
+
 export interface FacturaExtraida {
   tipo_comprobante: "FACTURA" | "REMITO";
-  numero_comprobante: string | null;
+  letra_comprobante: string | null;   // ADR-02-11: ancla de extracción
+  numero_comprobante: string | null;  // 'PPPPP-NNNNNNNN' con Punto de Venta (ADR-02-12)
   cuit_emisor: string;
   razon_social: string;
   fecha_emision: string;            // YYYY-MM-DD
   numero_orden_compra: string | null;
   items: ItemFactura[];
+  detalle_impuestos: ImpuestoDetalle[]; // ADR-02-12: líneas del pie; impuestos = Σ montos
   impuestos: number;
   monto_total: number;
 }
 
 export interface ReglaResultado {
-  codigo: "R1" | "R2" | "R3" | "R4" | "R5";
+  codigo: "R0" | "R1" | "R2" | "R3" | "R4" | "R5";   // R0 = admisión (REMITO, ADR-05-08)
   nombre: string;
   aprobado: boolean;
   mensaje: string;
   codigo_error: string | null;
+  detalles: Record<string, string> | null;           // p. ej. montos comparados por R3
 }
 
 export interface ResultadoAuditoria {
@@ -136,6 +145,6 @@ Base URL: `import.meta.env.VITE_API_URL` (default `http://localhost:8000/api/v1`
 
 - **Colores semáforo:** aprobado `bg-emerald-600`/texto blanco; rechazado `bg-red-600`; pendiente/inicial `bg-slate-300`. Badge global con `CheckCircle2` / `XCircle` y **desglose de latencia** en el encabezado: `IA 1280 ms · reglas 3 ms · total 1420 ms`.
 - **SemaforoReglas:** una fila por regla: código (chip `R1`), nombre, mensaje y `codigo_error` en rojo monospace si falla.
-- **TablaDatos:** cabecera (tipo, número, CUIT, razón social, fecha, OC, impuestos, total) + tabla de ítems (descripción, cantidad, precio unitario, subtotal) + fila total resaltada; montos formateados `es-AR` (`$ 384.000,00`).
+- **TablaDatos:** cabecera (tipo, número, CUIT, razón social, fecha, OC, impuestos — suma de `detalle_impuestos`, ADR-02-12 —, total) + tabla de ítems (descripción, cantidad, precio unitario, subtotal) + fila total resaltada; montos formateados `es-AR` (`$ 384.000,00`). El desglose línea a línea queda visible en el JsonInspector dentro de `datos_extraidos`.
 - **Estados:** `idle` (empty-state con instrucciones y flecha a los ejemplos), `loading` (skeleton + "Auditando documento…" y botones deshabilitados), `resultado`, `error` (BannerError con `codigo`/`mensaje`).
 - **Accesibilidad mínima:** botones reales con `aria-label`, foco visible, contraste AA.

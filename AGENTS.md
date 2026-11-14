@@ -82,7 +82,7 @@ Podés hacer **sin preguntar**:
 
 ## 6. Decisiones firmes (no re-debatir, están en ADRs)
 
-1. **Extracción IA:** OpenAI `gpt-4o-mini`, Structured Outputs con JSON Schema de Pydantic, `temperature=0`, máximo **1 reintento** sobre `ValidationError`. `EXTRACTOR_MODE=mock` por default.
+1. **Extracción IA:** OpenAI `gpt-4o-mini`, Structured Outputs con JSON Schema de Pydantic, `temperature=0`, máximo **1 reintento** sobre `ValidationError` o inconsistencia aritmética (gate = ecuación de R3, ADR-02-12). `impuestos` NO viaja al LLM: se calcula en Python desde `detalle_impuestos` (líneas del pie extraídas literal). `EXTRACTOR_MODE=mock` por default.
 2. **Solo facturas auditable:** `REMITO` → regla de admisión **R0** rechaza con `REMITO_NO_AUDITABLE` sin evaluar R1–R5.
 3. **CUIT Módulo 11:** pesos `[5,4,3,2,7,6,5,4,3,2]`; `dv = 11 - (suma % 11)`; `dv==11→0`, `dv==10→9`. Válidos de referencia: `30-12345678-1`, `30-71234567-1`, `20-12345678-6`; inválido: `30-12345678-9`.
 4. **Reglas:** R3 tolerancia ± $1.00 · R4 tope estricto `> $500.000` exige OC · R5 vigencia 0–60 días (fecha futura rechaza; reloj en `America/Argentina/Buenos_Aires`).
