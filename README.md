@@ -89,7 +89,7 @@ Umbrales verificados (SLOs, detalle en `specs/modules/05-qa-testing/04-verificat
 
 | Métrica | Umbral | Obtenido |
 | :--- | :--- | :--- |
-| Tests Pytest (110) | < 30 s | **8.60 s** |
+| Tests Pytest (115) | < 30 s | **12.39 s** |
 | Cobertura dominio / aplicación | 100% / > 90% | **100% / 100%** (total 99.59%) |
 | E2E Playwright (10 escenarios) | 2 pasadas sin flakes | **10/10 passed × 2 pasadas** (última: 1.0 m) |
 | k6 a 50 VUs: tasa de error | < 1% | **0.00%** |
