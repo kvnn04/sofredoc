@@ -90,7 +90,7 @@ Podés hacer **sin preguntar**:
 6. **Latencia desglosada:** `latencia_extraccion_ms` (IA) + `latencia_reglas_ms` (motor) + `tiempo_ejecucion_ms` (total), persistidas en SQLite.
 7. **Frontend:** pantalla dividida (visor iframe ~40% / resultados ~60%), sin router ni store global ni axios; JSON inspector muestra **Pydantic + crudo IA**.
 8. **Entorno:** venv + `requirements.txt` (sin uv, sin ORM, sin docker). Git con commit por fase.
-9. **Deploy:** backend Render + frontend Vercel; SQLite efímero en free tier (el historial se reinicia por deploy — documentado, aceptado).
+9. **Deploy (hecho 2026-11-15):** producción en https://sofredoc.vercel.app (Vercel) + https://sofredoc-api.onrender.com (Render); SQLite efímero en free tier (el historial se reinicia por deploy — documentado, aceptado). Modo actual `mock`; conmutar a `llm` en Render para evaluaciones con IA real (ambos modos verificados en producción).
 
 ## 7. Cheat sheet de contratos
 

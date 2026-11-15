@@ -89,13 +89,13 @@ está fuera de alcance (nota de DESIGN-05 §5).
 
 ## 5. Criterio de Aceptación Final (Definition of Done) — Proyecto Completo
 
-- [ ] Todas las tareas de `03-tasks.md` de **los 6 módulos** están marcadas como `[x]`. *(MOD-00..MOD-04 completos; MOD-05 queda con T-14..T-16 — deploy de cierre — pendientes de las plataformas de Kevin.)*
+- [x] Todas las tareas de `03-tasks.md` de **los 6 módulos** están marcadas como `[x]`. *(Cerrado 2026-11-15: T-14..T-16 ejecutadas por Kevin — deploy Render + Vercel con smoke en verde; barrido de los 6 `03-tasks.md` confirmó cero checkboxes pendientes.)*
 - [x] Todos los tests de Pytest pasan en verde (`unit` + `integration`, < 30 s, sin red). *(104 passed en 5.47 s.)*
 - [x] Cobertura: dominio 100%, aplicación > 90% (gate activo). *(Dominio 100%, aplicación 100%, total 99.30% con `--cov-fail-under=95`.)*
 - [x] Los tests de Playwright se ejecutan correctamente sin flakiness (2 pasadas). *(Con el escenario 5 de subida propia: 5/5 en 2 pasadas consecutivas (33,5 s / 31,3 s), `retries: 0`; antes, 4/4 en 3 pasadas.)*
 - [x] k6 cumple con los SLAs de latencia (p95 < 500 ms) y tasa de error (< 1%) con 50 VUs en modo mock. *(0.00% errores, p95 449.35 ms — §3.)*
 - [x] Los 3 PDFs de ejemplo son válidos y vigentes (fechas dentro de los 60 días de R5). *(Generados el 2026-11-12 con hoy−5/−20/−30; regenerar `scripts/generar_ejemplos.py` si la demo envejece — lo mismo aplica a la fecha estática de las fixtures del mock.)*
 - [x] La demo completa corre de cero con 2 comandos (backend + frontend) en < 15 s de setup post-instalación. *(Quickstart del README raíz.)*
-- [ ] `specs/README.md` refleja el estado real (🟢 Completado) y cada `04-verification.md` tiene su ADR log completo. *(Todos los módulos 🟢 salvo MOD-05: 🟡 con QA completo y deploy pendiente.)*
-- [ ] Backend y frontend desplegados (Render + Vercel) con smoke post-deploy en verde y URLs documentadas. *(Fase 5 — pendiente de que Kevin configure/autorice sus plataformas; guía preparada en `docs/despliegue.md`.)*
+- [x] `specs/README.md` refleja el estado real (🟢 Completado) y cada `04-verification.md` tiene su ADR log completo. *(2026-11-15: MOD-05 → 🟢 tras el deploy; los 6 módulos 🟢 y los ADR logs completos — ADR-02-01..12, ADR-03-01..08, ADR-04-01..07, ADR-05-01..10.)*
+- [x] Backend y frontend desplegados (Render + Vercel) con smoke post-deploy en verde y URLs documentadas. *(Hecho 2026-11-15: https://sofredoc-api.onrender.com (Render) + https://sofredoc.vercel.app (Vercel); smoke por Kevin en vivo — health 200, matriz de verdad completa, semáforo, JSON inspector e historial; ambos modos (`mock`/`llm`) verificados, queda `mock`. URLs y notas operativas en README raíz §"Producción"; guía en `docs/despliegue.md`.)*
 - [x] `README.md` raíz con quickstart, arquitectura, sección de calidad y capturas de la demo. *(Capturas reales del E2E en `docs/capturas/`.)*

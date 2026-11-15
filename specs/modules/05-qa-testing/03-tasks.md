@@ -31,6 +31,6 @@
 
 ## Fase 5: Despliegue de Cierre
 
-- [ ] **T-14:** Desplegar el backend en Render (build/start commands + variables `EXTRACTOR_MODE`, credenciales LLM, `CORS_ORIGINS` del dominio de Vercel) y verificar `GET /api/v1/health` público.
-- [ ] **T-15:** Desplegar el frontend en Vercel con `VITE_API_URL` apuntando al backend de Render; verificar que no hay errores de CORS.
-- [ ] **T-16:** Smoke post-deploy: `health` 200 + auditar el ejemplo #001 (mock) + historial visible; documentar URLs y la nota de SQLite efímero en el README.
+- [x] **T-14:** Desplegar el backend en Render (build/start commands + variables `EXTRACTOR_MODE`, credenciales LLM, `CORS_ORIGINS` del dominio de Vercel) y verificar `GET /api/v1/health` público. *(Hecho 2026-11-15: https://sofredoc-api.onrender.com → `{"status":"ok",...}`; verificado por Kevin en AMBOS modos (`llm` con `LLM_API_KEY` y `mock`); queda `mock` para la demo y se conmuta a `llm` al enviar a evaluación.)*
+- [x] **T-15:** Desplegar el frontend en Vercel con `VITE_API_URL` apuntando al backend de Render; verificar que no hay errores de CORS. *(Hecho 2026-11-15: https://sofredoc.vercel.app con `VITE_API_URL=https://sofredoc-api.onrender.com/api/v1` — con `/api/v1` incluido, ADR-04-06 — y `CORS_ORIGINS=https://sofredoc.vercel.app` en Render; sin errores de CORS.)*
+- [x] **T-16:** Smoke post-deploy: `health` 200 + auditar el ejemplo #001 (mock) + historial visible; documentar URLs y la nota de SQLite efímero en el README. *(Hecho 2026-11-15 por Kevin en vivo sobre la UI: 3 ejemplos con matriz de verdad APROBADO / RECHAZADO-R3 / RECHAZADO-R4, semáforo, JSON inspector (Pydantic + crudo IA) e historial OK. URLs + nota de SQLite efímero y cold start en README raíz §"Producción (demo en vivo)".)*

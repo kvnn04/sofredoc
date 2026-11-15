@@ -1,7 +1,9 @@
 # Despliegue de cierre — Render (backend) + Vercel (frontend) — MOD-05 Fase 5
 
-> **Estado:** guía lista para ejecutar. Los pasos de clic requieren las cuentas de
-> Kevin (Render, Vercel, GitHub). Tiempo estimado: **15–20 min**.
+> **Estado:** ✅ **Ejecutado 2026-11-15** — producción en https://sofredoc.vercel.app (Vercel) +
+> https://sofredoc-api.onrender.com (Render). Smoke post-deploy en verde (matriz de verdad,
+> semáforo, JSON inspector e historial); ambos modos (`mock`/`llm`) verificados — quedó `mock`
+> para la demo diaria (conmutar en Render al enviar a evaluación, §5).
 > Confirma la decisión de `04-verification.md` §4: SQLite efímero en el free tier de
 > Render — **el historial se reinicia en cada deploy** (aceptado y documentado).
 

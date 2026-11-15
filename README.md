@@ -6,6 +6,14 @@ Aplicación web **IDP** (Intelligent Document Processing) que audita facturas en
 - **Frontend:** React 19 · TypeScript · Vite · Tailwind CSS v4
 - **Fuente de verdad:** [`specs/`](./specs/README.md) (SDD) · estado del proyecto en [`specs/PROGRESO.md`](./specs/PROGRESO.md)
 
+## Producción (demo en vivo) — desde 2026-11-15
+
+- **App:** https://sofredoc.vercel.app (Vercel) · **API:** https://sofredoc-api.onrender.com (Render) — health: `GET /api/v1/health`
+- Modo actual: `EXTRACTOR_MODE=mock` (determinista, sin costo de IA). Para evaluar con extracción real: en Render, `EXTRACTOR_MODE=llm` + `LLM_API_KEY` — verificado funcionando en producción.
+- **SQLite efímero (free tier):** el historial arranca vacío tras cada deploy de Render (documentado y aceptado).
+- **Cold start:** tras ~15 min sin tráfico, el primer request tarda ~30–60 s (el servicio se "despierta").
+- Guía completa del deploy: [`docs/despliegue.md`](./docs/despliegue.md).
+
 ## Quickstart (2 comandos por terminal)
 
 ### 1. Backend — `http://localhost:8000`
