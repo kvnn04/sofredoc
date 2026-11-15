@@ -6,11 +6,11 @@
 
 ## Estado actual (resumen rápido)
 
-- **Fase del proyecto:** MOD-00..MOD-05 🟢 **en producción**. MOD-05 cerró con el deploy de cierre (T-14..T-16, 2026-11-15): backend Render https://sofredoc-api.onrender.com + frontend Vercel https://sofredoc.vercel.app — smoke post-deploy en verde por Kevin en vivo (matriz APROBADO/RECHAZADO-R3/RECHAZADO-R4, semáforo, JSON inspector e historial; modos `mock` y `llm` verificados, queda `mock`). QA previo: pytest **129 passed** (99.61%), E2E 10 escenarios × 2, k6 saturación (50 VUs) + funcional, workflow CI (actions v7), README+capturas; ADR-02-10/11/12 verificados con LLM real. Falta solo la **revisión final global (DoD)** — en curso hoy.
-- **Git:** `main` sincronizada con `origin` (https://github.com/kvnn04/sofredoc.git, todo pusheado hasta `0301bd5`; CI corre en cada push). Los PDFs reales de prueba quedan sin trackear en la raíz (precedente ADR-02-10/11).
-- **Siguiente acción concreta:** revisión final global del **DoD** (MOD-05 §5) — corriendo HOY 2026-11-15 con evidencia fresca (pytest + ruff + build + E2E × 2 + k6 50 VUs). Después: demo para evaluación (conmutar a `EXTRACTOR_MODE=llm` + `LLM_API_KEY` en Render si se quiere IA real) y (opcional) ejemplo del catálogo con alícuotas mixtas.
+- **Fase del proyecto:** **PROYECTO COMPLETO — MOD-00..MOD-05 🟢, en producción y con DoD global en verde (2026-11-15)**. MOD-05 cerró con el deploy de cierre (T-14..T-16): backend Render https://sofredoc-api.onrender.com + frontend Vercel https://sofredoc.vercel.app — smoke post-deploy en verde por Kevin en vivo (matriz APROBADO/RECHAZADO-R3/RECHAZADO-R4, semáforo, JSON inspector e historial; modos `mock` y `llm` verificados, queda `mock`). DoD §5 10/10 casillas [x] con evidencia fresca: pytest **129 passed** (99.61%), ruff OK, build OK, E2E **10/10 × 2** (1.4 m / 35.7 s), k6 50 VUs **0.00% error / p95 462.69 ms** (EXIT=0), ADR logs completos en los 6 módulos.
+- **Git:** `main` con 2 commits sin pushear (`9834612` deploy documentado + `DoD` revisión final) — el push lo ejecuta Kevin (CI corre al pushear). `origin` = https://github.com/kvnn04/sofredoc.git, sincronizado hasta `0301bd5`.
+- **Siguiente acción concreta:** push de `main` (Kevin) → demo para evaluación: conmutar a `EXTRACTOR_MODE=llm` + `LLM_API_KEY` en Render al enviarla a prueba (procedimiento en `docs/despliegue.md` §5). Antes del **2026-12-12**: regenerar ejemplos + fixture R4 (fechas estáticas, ADR-02-06). Opcional: ejemplo del catálogo con alícuotas mixtas.
 - **Módulos:** 00 🟢 · 01 🟢 · 02 🟢 · 03 🟢 · 04 🟢 · 05 🟢 (deploy de cierre hecho 2026-11-15 — T-14..T-16).
-- **Bloqueos:** ninguno — desplegado en producción. Notas operativas: SQLite efímero (el historial se reinicia por deploy, aceptado), cold start del free tier (~30–60 s en el primer request tras ~15 min de inactividad), demo vigente hasta ≈ 2027-01-06 (fechas estáticas de fixtures — regenerar si envejece, ADR-02-06).
+- **Bloqueos:** ninguno — proyecto completo, desplegado y con DoD en verde. Notas operativas: SQLite efímero (el historial se reinicia por deploy, aceptado), cold start del free tier (~30–60 s tras ~15 min de inactividad), vigencia de la demo: **ejemplo R4 hasta 2026-12-12** (fixture 2026-10-13), aprobada/desvío hasta 2027-01-06 — regenerar antes (ADR-02-06). **Ojo:** el `backend/.env` de Kevin quedó en `EXTRACTOR_MODE=llm` — un uvicorn local "en limpio" levanta en `llm`; forzar `EXTRACTOR_MODE=mock` por env para k6/E2E (RN-5-01, detectado y corregido hoy).
 - **Configuración del usuario (Kevin):** autonomía completa (tests, deps, archivos, commit local, LLM real, push/deploy) · verificación completa obligatoria · desvío menor → ADR y seguir; desvío de contrato/esquema/regla → preguntar · commits por fase.
 - **Protocolo de sesión (misión implícita en AGENTS.md §3):** Kevin escribe una palabra y el agente ya sabe qué hacer — `arrancá` = módulo pendiente completo (anuncia y ejecuta, sin esperar confirmación) · `MOD-XX` / `MOD-XX Fase N` = override · `prueba` = solo próxima fase · `estado` = resumen · `todo` = continuo hasta el final · `DoD` = revisión final. Al cerrar un módulo: bitácora + estado 🟢 en specs/README.md + **esperar al usuario** (no continuar al siguiente módulo por su cuenta).
 
@@ -647,3 +647,42 @@
 
 **Costo LLM real (si hubo llamadas en modo llm):**
 - Sin llamadas LLM (solo documentación).
+
+---
+
+## [2026-11-15] Sesión 18 — Deploy de cierre en producción (T-14..T-16) + DoD global en verde
+
+**Qué se hizo:**
+- Kevin ejecutó el deploy de cierre siguiendo `docs/despliegue.md`: backend en Render (https://sofredoc-api.onrender.com) y frontend en Vercel (https://sofredoc.vercel.app); `VITE_API_URL` con `/api/v1` incluido (ADR-04-06), `CORS_ORIGINS=https://sofredoc.vercel.app` y re-deploy para cerrar el círculo CORS.
+- **T-14/T-15/T-16 → [x]** en `03-tasks.md` con URLs reales; **MOD-05 → 🟢** en `specs/README.md` (6/6 módulos completos); DoD §5 ítems 1/8/9 → [x]. README raíz con sección **"Producción (demo en vivo)"** (URLs + SQLite efímero + cold start); `docs/despliegue.md` encabezado "Ejecutado 2026-11-15"; `AGENTS.md` §6.9 con las URLs. Commit `9834612`.
+- **Smoke post-deploy (Kevin, en vivo sobre producción):** health 200, 3 ejemplos con matriz de verdad (APROBADO / RECHAZADO-R3 / RECHAZADO-R4), semáforo, JSON inspector (Pydantic + crudo IA) e historial OK.
+- **Modo en producción verificado por Kevin en AMBOS modos** (`llm` con `LLM_API_KEY` y `mock`): queda `EXTRACTOR_MODE=mock` para la demo diaria; conmutar a `llm` en Render al enviar a evaluación (§5 de la guía).
+- **Tramos con LLM real de Kevin (exitosos, sin bugs):** Factura A vencida → RECHAZADO R5 (`COMPROBANTE_VENCIDO`); Factura A de proveedor de baja → RECHAZADO R2 (`PROVEEDOR_NO_REGISTRADO`); Factura C sin OC → RECHAZADO R4 (`FALTA_ORDEN_COMPRA`). Los 3 PDFs reales quedan sin trackear en la raíz (precedente ADR-02-10/11).
+- **Descubrimiento operativo:** el `backend/.env` local de Kevin quedó en `EXTRACTOR_MODE=llm` (por sus pruebas) — un uvicorn "en limpio" carga ese modo; la health lo mostró ANTES de la corrida k6. El agente mató el proceso y forzó `EXTRACTOR_MODE=mock` por variable de entorno (prevalece sobre `.env`) — RN-5-01 a salvo; k6/E2E siempre contra mock.
+- **Revisión final global del DoD (MOD-05 §5)** ejecutada por el agente: las 10 casillas → [x] con evidencia del día (abajo). El proyecto queda **completo**.
+
+**Verificación ejecutada (evidencia real, DoD 2026-11-15):**
+- `pytest tests -q --cov=src --cov-report=term-missing --cov-fail-under=95` → **129 passed en 7.31 s**, cobertura total **99.61%** (dominio 100%, aplicación 100%).
+- `ruff check .` (backend) → **All checks passed**.
+- `npm run build` (frontend) → **✓ built in 1.69 s, EXIT=0** (2095 módulos).
+- E2E Playwright: **10/10 passed × 2 pasadas consecutivas (1.4 m / 35.7 s), `retries: 0`, EXIT=0** — sin flakes.
+- k6 saturación (50 VUs: rampa 30 s + meseta 60 s + drenaje 15 s; backend mock `:8020` con BD efímera `qa/artifacts/k6-dod-20261115.db`): **p95 = 462.69 ms** < 500 · **tasa de error 0.00%** (0/16.872 requests) · **checks 22.496/22.496 (100%)** · **EXIT=0**. (La corrida original del 2026-11-12 queda en §3 como histórico.)
+- Barrido de los 6 `03-tasks.md` → **cero checkboxes `- [ ]` pendientes**; los 6 `04-verification.md` con su §4 ADR Log completo.
+- Vigencia de la demo (DoD ítem 6): todo vigente hoy — **ejemplo R4 (`extraccion-monto-alto-sin-oc.json`, 2026-10-13) vence por R5 el 2026-12-12**; aprobada/desvío (2026-11-07) vencen el 2027-01-06 (fecha límite real de la demo completa: **2026-12-12**, más apurada que la estimación previa de 2027-01-06).
+
+**Archivos creados/modificados clave:**
+- `specs/modules/05-qa-testing/03-tasks.md`, `specs/modules/05-qa-testing/04-verification.md`, `specs/README.md`, `README.md`, `docs/despliegue.md`, `AGENTS.md`, `specs/PROGRESO.md` (esta entrada + resumen). Sin cambios de código.
+
+**Decisiones / ADRs nuevos (si los hay):**
+- Ninguno: el deploy era el paso planificado (decisión del 2026-11-12 en este archivo) y el DoD no introduce cambios. Notas operativas sin ADR: conmutación mock/llm desde el dashboard de Render (ambos modos verificados); la vigencia del ejemplo R4 ya estaba en ADR-05-01 — hoy se explicita la fecha límite exacta (2026-12-12).
+
+**Estado exacto al cerrar:**
+- **PROYECTO COMPLETO:** MOD-00..MOD-05 🟢 · T-01..T-16 todas [x] · DoD §5 10/10 casillas [x] con evidencia fresca · producción desplegada y verificada (mock activo; llm listo para conmutar). Local: 2 commits sin pushear (`9834612` + el commit `DoD` de esta sesión) — el push lo ejecuta Kevin.
+
+**Próximos pasos para la próxima sesión:**
+1. Push de `main` (Kevin) → CI en verde → enviar la demo a evaluación (conmutar a `llm` en Render si corresponde).
+2. Antes del 2026-12-12: regenerar `scripts/generar_ejemplos.py` + fixture R4 (fechas estáticas).
+3. (Opcional) Ejemplo del catálogo con alícuotas mixtas/percepción; índice único de ADRs si se pide.
+
+**Costo LLM real (si hubo llamadas en modo llm):**
+- Tramos de Kevin en producción modo `llm` (health + matriz R2/R5/R4 con PDFs reales — costo no cuantificado por él). Sin llamadas del agente (solo suites locales en mock + documentación).
