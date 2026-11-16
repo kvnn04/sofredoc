@@ -30,12 +30,12 @@ Bienvenido a la fuente única de verdad del proyecto **SofreDoc Validator**. Est
 
 | ID | Módulo / Feature | Estado | Spec | Design | Tasks | Verification |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| `MOD-00` | Arquitectura Monolito & Core | 🟢 Completado | [01](./modules/00-monolito-core/01-spec.md) | [02](./modules/00-monolito-core/02-design.md) | [03](./modules/00-monolito-core/03-tasks.md) | [04](./modules/00-monolito-core/04-verification.md) |
-| `MOD-01` | Dominio y Motor de Reglas | 🟡 En Progreso | [01](./modules/01-motor-reglas/01-spec.md) | [02](./modules/01-motor-reglas/02-design.md) | [03](./modules/01-motor-reglas/03-tasks.md) | [04](./modules/01-motor-reglas/04-verification.md) |
-| `MOD-02` | Ingesta PDF y Extracción IA | ⚪ Pendiente | [01](./modules/02-extraccion-ia/01-spec.md) | [02](./modules/02-extraccion-ia/02-design.md) | [03](./modules/03-tasks.md) | [04](./modules/02-extraccion-ia/04-verification.md) |
-| `MOD-03` | API REST y SQLite | ⚪ Pendiente | [01](./modules/03-api-sqlite/01-spec.md) | [02](./modules/03-api-sqlite/02-design.md) | [03](./modules/03-api-sqlite/03-tasks.md) | [04](./modules/03-api-sqlite/04-verification.md) |
-| `MOD-04` | Frontend Clean Architecture | ⚪ Pendiente | [01](./modules/04-frontend/01-spec.md) | [02](./modules/04-frontend/02-design.md) | [03](./modules/04-frontend/03-tasks.md) | [04](./modules/04-frontend/04-verification.md) |
-| `MOD-05` | QA: Playwright & k6 | ⚪ Pendiente | [01](./modules/05-qa-testing/01-spec.md) | [02](./modules/05-qa-testing/02-design.md) | [03](./modules/05-qa-testing/03-tasks.md) | [04](./modules/05-qa-testing/04-verification.md) |
+| `MOD-00` | Arquitectura Monolito & Core | 🟢 Completado | [01](./specs/modules/00-monolito-core/01-spec.md) | [02](./specs/modules/00-monolito-core/02-design.md) | [03](./specs/modules/00-monolito-core/03-tasks.md) | [04](./specs/modules/00-monolito-core/04-verification.md) |
+| `MOD-01` | Dominio y Motor de Reglas | 🟡 En Progreso | [01](./specs/modules/01-motor-reglas/01-spec.md) | [02](./specs/modules/01-motor-reglas/02-design.md) | [03](./specs/modules/01-motor-reglas/03-tasks.md) | [04](./specs/modules/01-motor-reglas/04-verification.md) |
+| `MOD-02` | Ingesta PDF y Extracción IA | ⚪ Pendiente | [01](./specs/modules/02-extraccion-ia/01-spec.md) | [02](./specs/modules/02-extraccion-ia/02-design.md) | [03](./specs/modules/02-extraccion-ia/03-tasks.md) | [04](./specs/modules/02-extraccion-ia/04-verification.md) |
+| `MOD-03` | API REST y SQLite | ⚪ Pendiente | [01](./specs/modules/03-api-sqlite/01-spec.md) | [02](./specs/modules/03-api-sqlite/02-design.md) | [03](./specs/modules/03-api-sqlite/03-tasks.md) | [04](./specs/modules/03-api-sqlite/04-verification.md) |
+| `MOD-04` | Frontend Clean Architecture | ⚪ Pendiente | [01](./specs/modules/04-frontend/01-spec.md) | [02](./specs/modules/04-frontend/02-design.md) | [03](./specs/modules/04-frontend/03-tasks.md) | [04](./specs/modules/04-frontend/04-verification.md) |
+| `MOD-05` | QA: Playwright & k6 | ⚪ Pendiente | [01](./specs/modules/05-qa-testing/01-spec.md) | [02](./specs/modules/05-qa-testing/02-design.md) | [03](./specs/modules/05-qa-testing/03-tasks.md) | [04](./specs/modules/05-qa-testing/04-verification.md) |
 
 *Leyenda de Estado: ⚪ Pendiente | 🟡 En Progreso | 🟢 Completado | 🔴 Bloqueado*
 
