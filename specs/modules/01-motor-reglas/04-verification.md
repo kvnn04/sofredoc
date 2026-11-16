@@ -55,6 +55,10 @@ No aplica en este módulo.
 
 ## 4. Registro de Decisiones de Arquitectura (ADR Log)
 
+> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md).
+
+### Decisiones de base (sin ID)
+
 | Fecha | Decisión | Motivo / Contexto | Impacto |
 | :--- | :--- | :--- | :--- |
 | 2026-11-12 | `Decimal` en el dominio (no `float`) | Consistencia contable exacta; la tolerancia ±$1.00 y el borde $500.000 exigen precisión. | Serialización JSON explícita en MOD-03 (2 decimales). |

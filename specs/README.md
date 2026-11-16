@@ -36,7 +36,7 @@ Cada módulo depende del anterior: el core define el esqueleto, el dominio defin
 
 ## Convenciones Globales
 
-Aplican a todos los módulos y su incumplimiento debe registrarse en el ADR Log de `04-verification.md`:
+Aplican a todos los módulos y su incumplimiento debe registrarse en el ADR Log de `04-verification.md` (índice navegable de las 71 decisiones: [`ADRs.md`](./ADRs.md)):
 
 - **Idioma:** español para documentación, mensajes de usuario y nombres de negocio; código en inglés salvo conceptos de negocio (ej. `FacturaExtraida`, `numero_orden_compra`).
 - **Moneda:** ARS. El dominio trabaja con `Decimal`; la serialización JSON expone montos numéricos con 2 decimales.

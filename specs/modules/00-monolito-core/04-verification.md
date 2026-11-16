@@ -27,6 +27,10 @@ No aplica en este módulo (se ejecuta desde MOD-05 con la API completa).
 
 ## 4. Registro de Decisiones de Arquitectura (ADR Log)
 
+> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md).
+
+### Decisiones de base (sin ID)
+
 | Fecha | Decisión | Motivo / Contexto | Impacto |
 | :--- | :--- | :--- | :--- |
 | 2026-11-12 | Migrar de `backend/app/` plano a Clean Architecture `backend/src/` | La guía SDD exige separación de capas; el documento original era monolito plano de 5 archivos. | Mejor testabilidad; se documenta el mapeo en `specs/README.md`. |
