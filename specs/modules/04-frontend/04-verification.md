@@ -41,39 +41,26 @@ No aplica en este módulo.
 
 ## 4. Registro de Decisiones de Arquitectura (ADR Log)
 
-> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md).
+> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md). El texto completo vive en [`specs/adr/`](../../adr/): los 3 ADRs numerados como archivos individuales y las decisiones de base en [`base-02-05-extraccion-api-ui-qa.md`](../../adr/base-02-05-extraccion-api-ui-qa.md). Esta sección queda como tabla resumen de navegación.
 
 ### Decisiones de base (sin ID)
 
-| Fecha | Decisión | Motivo / Contexto | Impacto |
-| :--- | :--- | :--- | :--- |
-| 2026-11-12 | `fetch` nativo sin axios | 1 API, ~6 endpoints; menos dependencias para un PoC. | Wrapper propio con normalización de errores. |
-| 2026-11-12 | Sin router ni store global | Pantalla única con panel de historial; React state + hooks alcanza. | Menos boilerplate; si crece a multi-página, ADR de migración. |
-| 2026-11-12 | Visor con `iframe` (sin pdf.js) | Los 3 ejemplos son PDFs digitales simples; pdf.js suma peso innecesario al MVP. | Si aparecen PDFs problemáticos, se evalúa `pdf.js` con ADR. |
-| 2026-11-12 | Ejemplos auditados bajando el PDF y re-enviándolo | Un solo contrato de auditoría (`POST /auditar` multipart) sin endpoint "auditar ejemplo" extra. | 1 ida y vuelta extra, despreciable en local. |
+Texto completo (motivo e impacto): [`base-02-05-extraccion-api-ui-qa.md` · MOD-04](../../adr/base-02-05-extraccion-api-ui-qa.md#mod-04-frontend-clean-architecture)
+
+| Fecha | Decisión |
+| :--- | :--- |
+| 2026-11-12 | `fetch` nativo sin axios |
+| 2026-11-12 | Sin router ni store global |
+| 2026-11-12 | Visor con `iframe` (sin pdf.js) |
+| 2026-11-12 | Ejemplos auditados bajando el PDF y re-enviándolo |
 
 ### Decisiones formales (numeradas)
 
-#### ADR-04-05: Espejo de tipos ajustado al contrato real de la API
-
-- **Fecha:** 2026-11-12
-- **Decisión:** espejo de tipos ajustado al contrato real de la API (`url_pdf` en `Ejemplo`, `cuit_emisor`/`monto_total` planos, `detalles` en reglas, `R0` incluido, `resultado_esperado: string`, montos `number`).
-- **Motivo / Contexto:** DESIGN-04 §2 pedía "fuente única: la API"; los DTOs reales de MOD-03 (fuente de verdad verificada por HTTP) difieren levemente del boceto del design.
-- **Impacto:** Los componentes renderizan el contrato real; sin cambios de backend.
-
-#### ADR-04-06: VITE_API_URL vacío usa el proxy de Vite
-
-- **Fecha:** 2026-11-12
-- **Decisión:** `VITE_API_URL` vacío → base `/api/v1` (proxy de Vite del MOD-00 T-07) en lugar de `http://localhost:8000/api/v1` directo.
-- **Motivo / Contexto:** Respeta la convención del scaffold y evita CORS en desarrollo; en deploy (Vercel) se define `VITE_API_URL` absoluta.
-- **Impacto:** Solo configuración del cliente; contrato API intacto.
-
-#### ADR-04-07: Verificación visual diferida a Playwright de MOD-05
-
-- **Fecha:** 2026-11-12
-- **Decisión:** verificación visual del checklist §2 diferida a la suite Playwright de MOD-05 (que automatiza estos 10 escenarios); en MOD-04 se verificaron a nivel API/contrato con HTTP real.
-- **Motivo / Contexto:** No hay navegador/headless disponible sin agregar dependencias no declaradas (MOD-05 las declara).
-- **Impacto:** Checklist §2 y DoD ítems 3–4 quedan a la pasada visual de Kevin o a MOD-05. **Cerrado:** suite de MOD-05 en verde (5/5 × 2 pasadas) — ver evidencia §2.
+| ID | Fecha | Decisión | Archivo |
+| :--- | :--- | :--- | :--- |
+| ADR-04-05 | 2026-11-12 | Espejo de tipos ajustado al contrato real de la API | [→](../../adr/adr-04-05-espejo-de-tipos-contrato-real.md) |
+| ADR-04-06 | 2026-11-12 | VITE_API_URL vacío usa el proxy de Vite | [→](../../adr/adr-04-06-vite-api-url-y-proxy.md) |
+| ADR-04-07 | 2026-11-12 | Verificación visual diferida a Playwright de MOD-05 | [→](../../adr/adr-04-07-verificacion-visual-diferida-playwright.md) |
 
 ## 5. Criterio de Aceptación Final (Definition of Done)
 

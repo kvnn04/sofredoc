@@ -27,15 +27,17 @@ No aplica en este módulo (se ejecuta desde MOD-05 con la API completa).
 
 ## 4. Registro de Decisiones de Arquitectura (ADR Log)
 
-> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md).
+> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md). El texto completo vive en [`specs/adr/`](../../adr/): las decisiones de base de este módulo en el consolidado [`base-00-01-core-y-reglas.md`](../../adr/base-00-01-core-y-reglas.md). Esta sección queda como tabla resumen de navegación.
 
 ### Decisiones de base (sin ID)
 
-| Fecha | Decisión | Motivo / Contexto | Impacto |
-| :--- | :--- | :--- | :--- |
-| 2026-11-12 | Migrar de `backend/app/` plano a Clean Architecture `backend/src/` | La guía SDD exige separación de capas; el documento original era monolito plano de 5 archivos. | Mejor testabilidad; se documenta el mapeo en `specs/README.md`. |
-| 2026-11-12 | `pypdf` como parser PDF del MVP | Liviano y suficiente para PDFs digitales estándar; `pdfplumber` queda como fallback documentado. | Menos dependencias; riesgo documentado en MOD-02. |
-| 2026-11-12 | Sin ORM (`sqlite3` stdlib) | PoC con 1 tabla; mantener dependencias mínimas. | DDL manual en MOD-03. |
+Texto completo (motivo e impacto): [`base-00-01-core-y-reglas.md` · MOD-00](../../adr/base-00-01-core-y-reglas.md#mod-00-arquitectura-monolito-y-core)
+
+| Fecha | Decisión |
+| :--- | :--- |
+| 2026-11-12 | Migrar de `backend/app/` plano a Clean Architecture `backend/src/` |
+| 2026-11-12 | `pypdf` como parser PDF del MVP |
+| 2026-11-12 | Sin ORM (`sqlite3` stdlib) |
 
 ## 5. Criterio de Aceptación Final (Definition of Done)
 

@@ -43,77 +43,34 @@ Cubiertas en MOD-05 (con `EXTRACTOR_MODE=mock` esta API sostiene 50 VUs con p95 
 
 ## 4. Registro de Decisiones de Arquitectura (ADR Log)
 
-> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md).
+> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md). El texto completo vive en [`specs/adr/`](../../adr/): los 8 ADRs numerados como archivos individuales y las decisiones de base en [`base-02-05-extraccion-api-ui-qa.md`](../../adr/base-02-05-extraccion-api-ui-qa.md). Esta sección queda como tabla resumen de navegación.
 
 ### Decisiones de base (sin ID)
 
-| Fecha | Decisión | Motivo / Contexto | Impacto |
-| :--- | :--- | :--- | :--- |
-| 2026-11-12 | `RECHAZADO` responde `200 OK` | El rechazo es un **resultado de negocio** válido; 4xx/5xx reservados a fallos de contrato/infra. | La UI distingue estado del semáforo, no códigos HTTP, para el semáforo. |
-| 2026-11-12 | Estado `ERROR_EXTRACCION` solo en tabla | Trazabilidad de fallos sin contaminar el semáforo de reglas. | `reglas_evaluadas=[]` en ese estado. |
-| 2026-11-12 | SQLite WAL + `check_same_thread=False` | PoC mono-proceso con concurrencia moderada (k6 50 VUs de solo lectura + escrituras acotadas). | Tope práctico de escrituras concurrentes; suficiente para MVP. |
-| 2026-11-12 | PDFs de ejemplo generados por script con fechas relativas | Los ejemplos deben permanecer vigentes (R5: 60 días) sin regeneración manual periódica. | Re-ejecutar `generar_ejemplos.py` si la demo envejece > 60 días. |
-| 2026-11-12 | Montos `Decimal` → REAL + JSON numérico 2 decimales | Precisión en dominio; legibilidad en UI. | Conversión explícita en DTOs. |
-| 2026-11-12 | Latencia desglosada por etapa (IA / reglas) | Confirmado por el product owner: hace visible la arquitectura híbrida ante el evaluador técnico. | 2 columnas nuevas en SQLite + campos en DTO y UI. |
-| 2026-11-12 | SQLite efímero en deploy (free tier) | Render reinicia el disco en cada deploy; el historial es volátil en producción gratuita. | Nota obligatoria en README y smoke post-deploy (MOD-05 §5). |
+Texto completo (motivo e impacto): [`base-02-05-extraccion-api-ui-qa.md` · MOD-03](../../adr/base-02-05-extraccion-api-ui-qa.md#mod-03-api-rest-y-sqlite)
+
+| Fecha | Decisión |
+| :--- | :--- |
+| 2026-11-12 | `RECHAZADO` responde `200 OK` |
+| 2026-11-12 | Estado `ERROR_EXTRACCION` solo en tabla |
+| 2026-11-12 | SQLite WAL + `check_same_thread=False` |
+| 2026-11-12 | PDFs de ejemplo generados por script con fechas relativas |
+| 2026-11-12 | Montos `Decimal` → REAL + JSON numérico 2 decimales |
+| 2026-11-12 | Latencia desglosada por etapa (IA / reglas) |
+| 2026-11-12 | SQLite efímero en deploy (free tier) |
 
 ### Decisiones formales (numeradas)
 
-#### ADR-03-01: DTOs con cuit_emisor y monto_total planos
-
-- **Fecha:** 2026-11-12
-- **Decisión:** DTOs con `cuit_emisor` y `monto_total` planos
-- **Motivo / Contexto:** El diseño §2 (esencia) solo los lleva dentro de `datos_extraidos`; el listado del historial los necesita accesibles sin traer `datos_extraidos` completo (y en `ERROR_EXTRACCION` esos datos son NULL).
-- **Impacto:** Campos adicionales (aditivos, no rompen el contrato §3).
-
-#### ADR-03-02: App construida perezosamente con __getattr__
-
-- **Fecha:** 2026-11-12
-- **Decisión:** `app` de `main.py` se construye perezosamente (`__getattr__`)
-- **Motivo / Contexto:** Importar `src.main` desde los tests no debe crear `data/sofredoc.db` real; `uvicorn src.main:app` sigue funcionando (verificado en el smoke manual).
-- **Impacto:** DoD §5 b-2: los tests no tocan la BD real (smoke usa settings temporales).
-
-#### ADR-03-03: Conexión SQLite con threading.Lock y cierre en lifespan
-
-- **Fecha:** 2026-11-12
-- **Decisión:** conexión SQLite con `threading.Lock` + `cerrar()` en lifespan
-- **Motivo / Contexto:** Los endpoints sync corren en el threadpool de FastAPI; el lock serializa el acceso a la conexión compartida y el cierre evita `ResourceWarning`.
-- **Impacto:** Sin cambios de contrato; robustez bajo concurrencia.
-
-#### ADR-03-04: Errores vía handlers de excepción
-
-- **Fecha:** 2026-11-12
-- **Decisión:** errores de presentación vía handlers de excepción (no `HTTPException`)
-- **Motivo / Contexto:** El contrato §3 exige cuerpo `{"error": {...}}` sin el wrapper `detail` de FastAPI; los routers levantan `ErrorHTTPTipado` y el dominio `ErrorTipificado` se mapea por `codigo`.
-- **Impacto:** Cuerpos de error idénticos a §3 en todos los endpoints.
-
-#### ADR-03-05: Escenario R4 probado con extractor stub
-
-- **Fecha:** 2026-11-12
-- **Decisión:** escenario R4 (`FALTA_ORDEN_COMPRA`) se prueba con extractor stub
-- **Motivo / Contexto:** El mock solo trae variantes `aprobada`/`rechazado` (R3); la fila 3 de la matriz se verifica inyectando un extractor fijo en `create_app`. El flujo end-to-end real con LLM queda en la verificación pendiente de MOD-02 §2.
-- **Impacto:** Sin cambios en `MOCK_VARIANT` ni en contratos.
-
-#### ADR-03-06: reportlab solo para el script de ejemplos
-
-- **Fecha:** 2026-11-12
-- **Decisión:** `reportlab` en requirements.txt
-- **Motivo / Contexto:** Declarada por DESIGN-03 §4 como dependencia única del script `generar_ejemplos.py`; no se usa en `src/` (el dominio y los tests generan PDFs mínimos sin ella).
-- **Impacto:** requirements.txt: `reportlab>=4.0`.
-
-#### ADR-03-07: Montos de datos_extraidos como número JSON
-
-- **Fecha:** 2026-11-12
-- **Decisión:** montos de `datos_extraidos` como número (no string)
-- **Motivo / Contexto:** pydantic v2 serializa `Decimal` como string en modo JSON; la convención global exige número con 2 decimales → conversor explícito en el caso de uso.
-- **Impacto:** `monto_total: 384000.0` (número) en JSON, como en el ejemplo §3.
-
-#### ADR-03-08: Desempate del historial por rowid DESC
-
-- **Fecha:** 2026-11-13
-- **Decisión:** desempate del listado del historial por `rowid DESC` (`ORDER BY creado_en DESC, rowid DESC`)
-- **Motivo / Contexto:** Bug de CI detectado en el E2E escenario 4: `creado_en` tiene precisión de segundos y en el runner (rápido, ~1,3 s/test) las auditorías del escenario 2 y 3 cayeron en el mismo segundo → el `ORDER BY creado_en DESC` sin desempate devolvía empates en orden indefinido y la UI cargó como "más reciente" la auditoría del escenario 2 (R3) en vez de la del escenario 3 (R4). El contrato CU-04 ("el más nuevo primero") se mantiene: con empate de segundo, el más nuevo es el último insertado (`rowid` refleja el orden de inserción). Sin cambios de DDL, contrato API ni reglas.
-- **Impacto:** pytest **111 passed** (+1 test de integración que reproduce el empate: 3 filas mismo segundo → orden de inserción invertido, determinístico); cobertura total 99.59% (gate ≥95%). E2E re-verificado en verde tras el fix.
+| ID | Fecha | Decisión | Archivo |
+| :--- | :--- | :--- | :--- |
+| ADR-03-01 | 2026-11-12 | DTOs con cuit_emisor y monto_total planos | [→](../../adr/adr-03-01-dtos-con-cuit-y-monto-planos.md) |
+| ADR-03-02 | 2026-11-12 | App construida perezosamente con __getattr__ | [→](../../adr/adr-03-02-app-perezosa-con-getattr.md) |
+| ADR-03-03 | 2026-11-12 | Conexión SQLite con threading.Lock y cierre en lifespan | [→](../../adr/adr-03-03-sqlite-con-lock-y-cierre.md) |
+| ADR-03-04 | 2026-11-12 | Errores vía handlers de excepción | [→](../../adr/adr-03-04-errores-via-handlers.md) |
+| ADR-03-05 | 2026-11-12 | Escenario R4 probado con extractor stub | [→](../../adr/adr-03-05-escenario-r4-extractor-stub.md) |
+| ADR-03-06 | 2026-11-12 | reportlab solo para el script de ejemplos | [→](../../adr/adr-03-06-reportlab-solo-para-ejemplos.md) |
+| ADR-03-07 | 2026-11-12 | Montos de datos_extraidos como número JSON | [→](../../adr/adr-03-07-montos-como-numero-json.md) |
+| ADR-03-08 | 2026-11-13 | Desempate del historial por rowid DESC | [→](../../adr/adr-03-08-desempate-historial-por-rowid.md) |
 
 ## 5. Criterio de Aceptación Final (Definition of Done)
 
