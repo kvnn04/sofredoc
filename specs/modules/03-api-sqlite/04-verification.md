@@ -43,7 +43,7 @@ Cubiertas en MOD-05 (con `EXTRACTOR_MODE=mock` esta API sostiene 50 VUs con p95 
 
 ## 4. Registro de Decisiones de Arquitectura (ADR Log)
 
-> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md). El texto completo vive en [`specs/adr/`](../../adr/): los 8 ADRs numerados como archivos individuales y las decisiones de base en [`base-02-05-extraccion-api-ui-qa.md`](../../adr/base-02-05-extraccion-api-ui-qa.md). Esta sección queda como tabla resumen de navegación.
+> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas en el índice [`adr/README.md`](../../adr/README.md). El texto completo vive en [`specs/adr/`](../../adr/): los 8 ADRs numerados como archivos individuales y las decisiones de base en [`base-02-05-extraccion-api-ui-qa.md`](../../adr/base-02-05-extraccion-api-ui-qa.md). Esta sección queda como tabla resumen de navegación.
 
 ### Decisiones de base (sin ID)
 

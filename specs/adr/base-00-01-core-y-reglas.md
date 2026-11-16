@@ -1,6 +1,6 @@
 # Decisiones de base (sin ID) — MOD-00 y MOD-01: Core y Motor de Reglas
 
-> **Volver:** [Índice maestro de ADRs](../ADRs.md) · [§4 MOD-00](../modules/00-monolito-core/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log) · [§4 MOD-01](../modules/01-motor-reglas/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
+> **Volver:** [Índice de ADRs](README.md) · [§4 MOD-00](../modules/00-monolito-core/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log) · [§4 MOD-01](../modules/01-motor-reglas/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
 
 Consolidado de las **15 decisiones de base** (sin ID) de MOD-00 y MOD-01, con el texto verbatim del §4 de cada módulo (fecha, decisión, motivo e impacto intactos).
 

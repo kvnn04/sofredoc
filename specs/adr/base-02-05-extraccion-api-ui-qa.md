@@ -1,6 +1,6 @@
 # Decisiones de base (sin ID) — MOD-02 a MOD-05: Extracción, API, UI y QA
 
-> **Volver:** [Índice maestro de ADRs](../ADRs.md) · [§4 MOD-02](../modules/02-extraccion-ia/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log) · [§4 MOD-03](../modules/03-api-sqlite/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log) · [§4 MOD-04](../modules/04-frontend/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log) · [§4 MOD-05](../modules/05-qa-testing/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
+> **Volver:** [Índice de ADRs](README.md) · [§4 MOD-02](../modules/02-extraccion-ia/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log) · [§4 MOD-03](../modules/03-api-sqlite/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log) · [§4 MOD-04](../modules/04-frontend/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log) · [§4 MOD-05](../modules/05-qa-testing/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
 
 Consolidado de las **23 decisiones de base** (sin ID) de MOD-02, MOD-03, MOD-04 y MOD-05, con el texto verbatim del §4 de cada módulo (fecha, decisión, motivo e impacto intactos).
 

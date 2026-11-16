@@ -1,6 +1,6 @@
 # ADR-02-09: p95 de extracción real y desvío de latencia aceptado
 
-> **Volver:** [Índice maestro de ADRs](../ADRs.md) · [§4 del módulo de origen](../modules/02-extraccion-ia/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
+> **Volver:** [Índice de ADRs](README.md) · [§4 del módulo de origen](../modules/02-extraccion-ia/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
 
 | | |
 | :--- | :--- |

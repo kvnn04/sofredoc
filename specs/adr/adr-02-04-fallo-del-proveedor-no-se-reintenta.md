@@ -1,6 +1,6 @@
 # ADR-02-04: Fallo del proveedor se tipifica y no se reintenta
 
-> **Volver:** [Índice maestro de ADRs](../ADRs.md) · [§4 del módulo de origen](../modules/02-extraccion-ia/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
+> **Volver:** [Índice de ADRs](README.md) · [§4 del módulo de origen](../modules/02-extraccion-ia/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
 
 | | |
 | :--- | :--- |

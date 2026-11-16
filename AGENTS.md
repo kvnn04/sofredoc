@@ -27,8 +27,7 @@ Aplicación web IDP (Intelligent Document Processing) que audita facturas en PDF
 | `specs/modules/00..05/02-design.md` | Cómo: Clean Architecture, modelos, DDL, contratos API, prompts |
 | `specs/modules/00..05/03-tasks.md` | Plan atómico con checkboxes `[ ]` → `[x]` (tu checklist de trabajo) |
 | `specs/modules/00..05/04-verification.md` | Tests obligatorios, matriz de casos borde, umbrales, **ADR Log** y DoD del módulo |
-| `specs/adr/` | **Decisiones de arquitectura**: 33 ADRs numerados como archivos individuales (`adr-XX-YY-*.md`) + 2 consolidados de base; texto completo (fecha, decisión, motivo, impacto) |
-| `specs/ADRs.md` | **Índice maestro de ADRs**: las 33 decisiones numeradas + 38 de base, organizadas por tema, con link directo al archivo de cada ADR |
+| `specs/adr/` | **Decisiones de arquitectura**: 33 ADRs numerados como archivos individuales (`adr-XX-YY-*.md`) + 2 consolidados de base; texto completo (fecha, decisión, motivo, impacto). Índice único con descripción breve de las 71: su `README.md` |
 | `specs/PROGRESO.md` | **Bitácora de continuidad**: estado exacto del proyecto (leer SIEMPRE al arrancar) |
 
 **Orden de implementación (dependencias estrictas):** `MOD-00` (core) → `MOD-01` (reglas) → `MOD-02` (extracción) → `MOD-03` (API/SQLite) → `MOD-04` (frontend) → `MOD-05` (QA + deploy).
@@ -68,7 +67,7 @@ Si todo está `[x]` y no hay fases pendientes: informar que el proyecto está co
 - **Tareas en orden estricto** dentro del módulo; al completar cada tarea marcar su checkbox `[x]` en `03-tasks.md`.
 - **Verificación completa:** antes de dar por cerrada una fase o módulo, ejecutar los comandos de `04-verification.md` de ese módulo y mostrar el **output real** (tests en verde, build, lint). Nunca declarar "listo" sin evidencia ejecutada.
 - **Commits por fase** (convención, en español): `MOD-01 Fase 2: reglas R1–R5 + engine` — al cerrar cada fase del `03-tasks.md`. Sin `push` salvo orden explícita.
-- **Desvíos (ADR + preguntar):** desvío menor o implementación ambigua → crear archivo en `specs/adr/` (`adr-XX-YY-nombre-corto.md`), sumar la fila resumen en el §4 del `04-verification.md` del módulo y la fila en el índice [`specs/ADRs.md`](./specs/ADRs.md); seguir. Si el desvío cambia **contrato API, esquema de BD o una regla de negocio** → **preguntar al usuario antes** de tocar código.
+- **Desvíos (ADR + preguntar):** desvío menor o implementación ambigua → crear archivo en `specs/adr/` (`adr-XX-YY-nombre-corto.md`), sumar la fila resumen en el §4 del `04-verification.md` del módulo y la fila en el índice [`specs/adr/README.md`](./specs/adr/README.md); seguir. Si el desvío cambia **contrato API, esquema de BD o una regla de negocio** → **preguntar al usuario antes** de tocar código.
 - **Specs primero:** cualquier cambio de spec se hace editando el `.md` correspondiente (+ entrada ADR), nunca solo en el código.
 - **Estado global RECHAZADO = `200 OK`** (resultado de negocio). Los 4xx/5xx quedan reservados a fallos de contrato/infraestructura.
 

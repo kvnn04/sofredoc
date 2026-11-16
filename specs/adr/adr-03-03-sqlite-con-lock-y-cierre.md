@@ -1,6 +1,6 @@
 # ADR-03-03: Conexión SQLite con threading.Lock y cierre en lifespan
 
-> **Volver:** [Índice maestro de ADRs](../ADRs.md) · [§4 del módulo de origen](../modules/03-api-sqlite/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
+> **Volver:** [Índice de ADRs](README.md) · [§4 del módulo de origen](../modules/03-api-sqlite/04-verification.md#4-registro-de-decisiones-de-arquitectura-adr-log)
 
 | | |
 | :--- | :--- |

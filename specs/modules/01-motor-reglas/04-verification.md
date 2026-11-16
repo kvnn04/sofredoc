@@ -55,7 +55,7 @@ No aplica en este módulo.
 
 ## 4. Registro de Decisiones de Arquitectura (ADR Log)
 
-> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas y enlazadas por tema en [`specs/ADRs.md`](../../ADRs.md). El texto completo vive en [`specs/adr/`](../../adr/): las decisiones de base de este módulo en el consolidado [`base-00-01-core-y-reglas.md`](../../adr/base-00-01-core-y-reglas.md). Esta sección queda como tabla resumen de navegación.
+> **Índice maestro:** todas las decisiones del proyecto —numeradas y de base— están catalogadas en el índice [`adr/README.md`](../../adr/README.md). El texto completo vive en [`specs/adr/`](../../adr/): las decisiones de base de este módulo en el consolidado [`base-00-01-core-y-reglas.md`](../../adr/base-00-01-core-y-reglas.md). Esta sección queda como tabla resumen de navegación.
 
 ### Decisiones de base (sin ID)
 
