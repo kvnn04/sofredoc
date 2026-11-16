@@ -6,6 +6,20 @@ Aplicación web **IDP** (Intelligent Document Processing) que audita facturas en
 - **Frontend:** React 19 · TypeScript · Vite · Tailwind CSS v4
 - **Fuente de verdad:** [`specs/`](./specs/README.md) (SDD) · estado del proyecto en [`specs/PROGRESO.md`](./specs/PROGRESO.md)
 
+## Decisiones clave en 60 segundos
+
+| Decisión | Por qué | Evidencia |
+| :--- | :--- | :--- |
+| **La IA solo extrae; el sistema decide.** El LLM (Structured Outputs, `temperature=0`) convierte el PDF en un objeto Pydantic tipado; el semáforo ✅/❌ lo decide un motor determinista R0–R5 en Python puro con `Decimal` exacto. | Separar lo probabilístico de lo determinista: los datos extraídos nunca se "corrigen" y un `RECHAZADO` es resultado de negocio (200 OK), no error HTTP. | [`domain/rules/`](./backend/src/domain/rules/) · ADR-02-04 |
+| **El LLM no suma:** `impuestos` se calcula en Python desde `detalle_impuestos` (líneas del pie extraídas una por una), con un gate de consistencia pre-reintento que reutiliza la misma ecuación de R3. | Pedirle la suma al modelo produjo un bug real ($94.600 por $145.800): la aritmética mental de un LLM no es fuente confiable para el control contable. | [ADR-02-12](./specs/modules/02-extraccion-ia/04-verification.md) · [`r3_matematica.py`](./backend/src/domain/rules/r3_matematica.py) |
+| **3 falsos positivos resueltos con facturas AFIP reales:** Factura A con IVA discriminado, Factura B con Transparencia Fiscal (Ley 27.743) y Factura A mixta con percepciones. Cada fix fue semántico (schema + prompt), con R3 intacta y fixture de regresión. | La extracción falla en las reglas fiscales que un humano asume obvias; se corrigió iterando con LLM real (costo por tramo loggeado en la bitácora) sin tocar las reglas de negocio. | [ADR-02-10/11/12](./specs/modules/02-extraccion-ia/04-verification.md) |
+| **QA en dos planos + CI:** 129 tests con gate de cobertura (dominio 100%), E2E Playwright con `retries: 0` (no oculta flakes), k6 de saturación **y** funcional (correctitud del contrato bajo carga). | Un test que falla al azar vale menos que ninguno; y "responde 200" no implica "responde el contrato correcto". | [`qa/README.md`](./qa/README.md) · [CI](./.github/workflows/verificacion.yml) |
+| **Limitaciones conocidas y documentadas:** SQLite efímero en Render (el historial se reinicia por deploy), sin autenticación (PoC de alcance cerrado), lock de SQLite como cuello a 50 VUs (p95 462 ms), cold start del free tier. | Un PoC honesto declara sus bordes: cada limitación tiene su ADR y su camino de migración (el repositorio ya vive detrás de un puerto). | [ADR-05-06](./specs/modules/05-qa-testing/04-verification.md) · [`docs/despliegue.md`](./docs/despliegue.md) |
+
+**Cómo se construyó:** metodología Spec-Driven ([`specs/`](./specs/README.md): 6 módulos × 4 documentos) con implementación orquestada por agentes de IA bajo reglas estrictas — arquitectura, decisiones y verificación del autor; ejecución asistida. Cada desvío quedó registrado como ADR y cada sesión con evidencia real en la bitácora: [`specs/PROGRESO.md`](./specs/PROGRESO.md) · protocolo de trabajo: [`AGENTS.md`](./AGENTS.md).
+
+**Si sos técnico y tenés 5 minutos:** [`models.py`](./backend/src/domain/models.py) (el contrato con semántica AFIP), [`structured_extractor.py`](./backend/src/infrastructure/llm/structured_extractor.py) (el gate de consistencia) y [`sqlite_repository.py`](./backend/src/infrastructure/db/sqlite_repository.py), más los ADRs 02-08 (Decimal en strict), 02-12 (impuestos derivado) y 03-08 (bug real de concurrencia/timing en CI).
+
 ## Producción (demo en vivo) — desde 2026-11-15
 
 - **App:** https://sofredoc.vercel.app (Vercel) · **API:** https://sofredoc-api.onrender.com (Render) — health: `GET /api/v1/health`
