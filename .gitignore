@@ -26,3 +26,8 @@ test-results/
 .env
 backend/.env
 frontend/.env
+
+# PDFs de prueba reales en la raíz (smoke manual con LLM real — ADR-02-10/11/12):
+# se ignoran para que no viajen con el repo; los ejemplos y fixtures versionados
+# viven en backend/data/ejemplos/ y qa/e2e/fixtures/
+/*.pdf

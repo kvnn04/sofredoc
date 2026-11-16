@@ -51,7 +51,7 @@ jobs:
       # efímera) + frontend Vite. En CI `reuseExistingServer` es false.
       - name: Instalar Playwright + Chromium
         run: npm ci && npx playwright install --with-deps chromium
-      - name: E2E Playwright (4 escenarios, retries 0)
+      - name: E2E Playwright (10 escenarios, retries 0)
         run: npx playwright test qa/e2e/auditoria.spec.ts
         env:
           CI: "true"
