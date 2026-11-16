@@ -31,3 +31,6 @@ frontend/.env
 # se ignoran para que no viajen con el repo; los ejemplos y fixtures versionados
 # viven en backend/data/ejemplos/ y qa/e2e/fixtures/
 /*.pdf
+
+# Dossier ejecutivo de presentación — pieza privada, fuera del repo público
+PRESENTACION_SOFREDOC.md
